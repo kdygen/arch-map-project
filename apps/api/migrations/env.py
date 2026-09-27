@@ -3,20 +3,33 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine, pool
 
+from app.catalog import models  # noqa: F401  (registers tables on Base.metadata)
 from app.core.config import get_settings
+from app.core.db import Base
 
 config = context.config
 
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+if config.config_file_name is not None and not config.attributes.get("skip_logging"):
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
-# Phase 2 sets this to the models' metadata to enable autogenerate.
-target_metadata = None
+target_metadata = Base.metadata
+
+
+def include_object(obj, name, type_, reflected, compare_to):
+    """Ignore database tables that our models do not define.
+
+    PostGIS and Supabase create their own tables. Autogenerate must never
+    propose dropping them.
+    """
+    if type_ == "table" and reflected and compare_to is None:
+        return False
+    return True
 
 
 def get_url() -> str:
     # Single source of truth: the same DATABASE_URL the application uses.
-    return get_settings().database_url
+    # Tests pass their own URL through `config.attributes`.
+    return config.attributes.get("database_url") or get_settings().database_url
 
 
 def run_migrations_offline() -> None:
@@ -37,7 +50,11 @@ def run_migrations_online() -> None:
     connectable = create_engine(get_url(), poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            include_object=include_object,
+        )
 
         with context.begin_transaction():
             context.run_migrations()

@@ -1,0 +1,60 @@
+{
+  "cities": [
+    {
+      "slug": "boston",
+      "name": "Boston",
+      "region": "Massachusetts",
+      "country_code": "US",
+      "center": { "latitude": 42.358834, "longitude": -71.05783 }
+    },
+    {
+      "slug": "cambridge",
+      "name": "Cambridge",
+      "region": "Massachusetts",
+      "country_code": "US",
+      "center": { "latitude": 42.365635, "longitude": -71.104002 }
+    }
+  ],
+  "periods": [
+    { "slug": "colonial", "name": "Colonial", "start_year": 1600, "end_year": 1779 },
+    { "slug": "early-republic", "name": "Early Republic", "start_year": 1780, "end_year": 1836 },
+    { "slug": "victorian", "name": "Victorian Era", "start_year": 1837, "end_year": 1901 },
+    { "slug": "early-20th-century", "name": "Early 20th Century", "start_year": 1902, "end_year": 1944 },
+    { "slug": "postwar-modern", "name": "Postwar Modern", "start_year": 1945, "end_year": 1975 },
+    { "slug": "contemporary", "name": "Contemporary", "start_year": 1976, "end_year": null }
+  ],
+  "building_types": [
+    { "slug": "state-capitol", "name": "State Capitol" },
+    { "slug": "house-museum", "name": "House Museum" },
+    { "slug": "church", "name": "Church" },
+    { "slug": "chapel", "name": "Chapel" },
+    { "slug": "dormitory", "name": "Dormitory" }
+  ],
+  "styles": [
+    { "slug": "federal", "name": "Federal" },
+    { "slug": "late-victorian", "name": "Late Victorian" },
+    { "slug": "second-empire", "name": "Second Empire", "parent": "late-victorian" },
+    { "slug": "richardsonian-romanesque", "name": "Richardsonian Romanesque", "parent": "late-victorian" },
+    { "slug": "modernism", "name": "Modernism" }
+  ],
+  "tags": [
+    { "slug": "national-historic-landmark", "name": "National Historic Landmark", "category": "designation" },
+    { "slug": "gilded-dome", "name": "Gilded Dome", "category": "feature" },
+    { "slug": "mansard-roof", "name": "Mansard Roof", "category": "feature" },
+    { "slug": "skylight", "name": "Skylight", "category": "feature" },
+    { "slug": "undulating-facade", "name": "Undulating Facade", "category": "feature" },
+    { "slug": "period-rooms", "name": "Period Rooms", "category": "interior" },
+    { "slug": "stained-glass", "name": "Stained Glass", "category": "interior" },
+    { "slug": "murals", "name": "Murals", "category": "interior" },
+    { "slug": "brick", "name": "Brick", "category": "material" }
+  ],
+  "architects": [
+    { "slug": "charles-bulfinch", "name": "Charles Bulfinch" },
+    { "slug": "edward-clarke-cabot", "name": "Edward Clarke Cabot" },
+    { "slug": "henry-hobson-richardson", "name": "Henry Hobson Richardson" },
+    { "slug": "john-la-farge", "name": "John La Farge" },
+    { "slug": "eero-saarinen", "name": "Eero Saarinen" },
+    { "slug": "alvar-aalto", "name": "Alvar Aalto" },
+    { "slug": "perry-shaw-and-hepburn", "name": "Perry Shaw and Hepburn" }
+  ]
+}

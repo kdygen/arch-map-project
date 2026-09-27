@@ -1,10 +1,12 @@
-.PHONY: help install env db-up db-down migrate api web test lint check
+.PHONY: help install env db-up db-down migrate seed seed-check api web test lint check
 
 help:
 	@echo "make install   Install backend and frontend dependencies, create env files"
 	@echo "make db-up     Start local PostgreSQL + PostGIS"
 	@echo "make db-down   Stop the local database (data is kept)"
 	@echo "make migrate   Apply database migrations"
+	@echo "make seed      Validate seed data and load it into the database"
+	@echo "make seed-check Validate seed data without touching the database"
 	@echo "make api       Run FastAPI on http://localhost:8000"
 	@echo "make web       Run Next.js on http://localhost:3000"
 	@echo "make test      Run backend tests"
@@ -29,6 +31,12 @@ db-down:
 migrate:
 	cd apps/api && uv run alembic upgrade head
 
+seed:
+	cd apps/api && uv run python ../../data/scripts/seed.py
+
+seed-check:
+	cd apps/api && uv run python ../../data/scripts/seed.py --check
+
 api:
 	cd apps/api && uv run uvicorn app.main:app --reload --port 8000
 
@@ -39,7 +47,7 @@ test:
 	cd apps/api && uv run pytest
 
 lint:
-	cd apps/api && uv run ruff check . && uv run ruff format --check .
+	cd apps/api && uv run ruff check . ../../data/scripts && uv run ruff format --check . ../../data/scripts
 	cd apps/web && npm run lint && npm run typecheck
 
 check: lint test

@@ -3,6 +3,7 @@
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.catalog.router import router as catalog_router
 from app.core.config import get_settings
 from app.health.router import router as health_router
 
@@ -21,6 +22,7 @@ def create_app() -> FastAPI:
 
     api_v1 = APIRouter(prefix="/api/v1")
     api_v1.include_router(health_router)
+    api_v1.include_router(catalog_router)
     app.include_router(api_v1)
 
     return app

@@ -1,0 +1,104 @@
+{
+  "slug": "trinity-church-boston",
+  "name": "Trinity Church",
+  "status": "published",
+  "location": { "latitude": 42.350068, "longitude": -71.075425 },
+  "address_line": "206 Clarendon Street, Boston, MA 02116",
+  "city": "boston",
+  "country_code": "US",
+  "timezone": "America/New_York",
+  "year_built": { "start": 1872, "end": 1877, "is_approximate": false },
+  "building_type": "church",
+  "period": "victorian",
+  "architects": [
+    { "architect": "henry-hobson-richardson", "role": "architect" },
+    { "architect": "john-la-farge", "role": "interior decoration" }
+  ],
+  "styles": [{ "style": "richardsonian-romanesque", "is_primary": true }],
+  "tags": ["national-historic-landmark", "stained-glass", "murals"],
+  "description": "An Episcopal church on Copley Square with massive proportions, rounded arches, and rough rock-faced, multicolored stone. The interior decoration was the work of painter John La Farge and his team, and the stained glass windows were produced by nine different studios, including works by William Morris and Edward Burne-Jones. It is home to an active parish and is not a museum.",
+  "significance_text": "Constructed and decorated between 1872 and 1877, it is the prototype of the style that became known as Richardsonian Romanesque. It was designated a National Historic Landmark in 1971, and the church states that the American Institute of Architects has recognized it as one of the ten most important buildings in America.",
+  "public_access": "public",
+  "admission": {
+    "type": "paid",
+    "notes": "Open for tours Tuesday through Saturday from 10 am to 4:30 pm. Adults $10. Seniors, students, educators, military, first responders, and Massachusetts residents $8. Children younger than 14 and EBT and WIC cardholders are free. Tickets include a self-guided, audio, or guided tour and are bought on arrival at the Welcome Desk. On Tuesdays admission pauses from 12:00 pm to 12:45 pm. Hours may vary due to weddings, funerals, and worship services."
+  },
+  "reservation_required": false,
+  "tours_available": true,
+  "website_url": "https://trinitychurchboston.org/",
+  "curated": {
+    "significance_score": 5,
+    "visit_minutes_exterior": 15,
+    "visit_minutes_interior": 45
+  },
+  "opening_hours": [
+    { "day_of_week": 1, "opens": "10:00", "closes": "12:00" },
+    { "day_of_week": 1, "opens": "12:45", "closes": "16:30" },
+    { "day_of_week": 2, "opens": "10:00", "closes": "16:30" },
+    { "day_of_week": 3, "opens": "10:00", "closes": "16:30" },
+    { "day_of_week": 4, "opens": "10:00", "closes": "16:30" },
+    { "day_of_week": 5, "opens": "10:00", "closes": "16:30" }
+  ],
+  "sources": [
+    {
+      "key": "nrhp",
+      "title": "National Register of Historic Places Inventory - Nomination Form: Trinity Church",
+      "url": "https://npgallery.nps.gov/NRHP/GetAsset/NHLS/70000733_text",
+      "publisher": "National Park Service",
+      "source_type": "government",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "art",
+      "title": "Art and Architecture",
+      "url": "https://trinitychurchboston.org/art-and-architecture/",
+      "publisher": "Trinity Church in the City of Boston",
+      "source_type": "official_site",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "tours",
+      "title": "Tours",
+      "url": "https://trinitychurchboston.org/tours/",
+      "publisher": "Trinity Church in the City of Boston",
+      "source_type": "official_site",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "history",
+      "title": "History",
+      "url": "https://trinitychurchboston.org/history/",
+      "publisher": "Trinity Church in the City of Boston",
+      "source_type": "official_site",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "osm",
+      "title": "OpenStreetMap relation 64066: Trinity Church",
+      "url": "https://www.openstreetmap.org/relation/64066",
+      "publisher": "OpenStreetMap contributors",
+      "source_type": "other",
+      "accessed_at": "2026-09-27"
+    }
+  ],
+  "provenance": [
+    { "field": "location", "source": "osm", "note": "Coordinates from OpenStreetMap Nominatim for \"Trinity Church, 206, Clarendon Street\"." },
+    { "field": "address", "source": "art", "note": "206 Clarendon Street, Boston, MA 02116, as given in the official site's footer." },
+    { "field": "architects", "source": "art", "note": "\"Designed by Henry Hobson Richardson\"; \"The interior decoration was the work of painter John La Farge and his team\"" },
+    { "field": "architects", "source": "nrhp", "note": "\"constructed by Norcross Brothers in 1872-77\"" },
+    { "field": "year_built", "source": "history", "note": "\"constructed and decorated between 1872 and 1877\"" },
+    { "field": "year_built", "source": "nrhp", "note": "\"Trinity Church was dedicated on February 9, 1877.\"" },
+    { "field": "styles", "source": "art", "note": "\"a celebrated example of 'Richardsonian Romanesque' design\"" },
+    { "field": "styles", "source": "nrhp", "note": "\"the prototype of what became immediately known as the 'Richardsonian Romanesque' architectural style\"" },
+    { "field": "building_type", "source": "art", "note": "\"home to an active parish of the Episcopal church\"; \"Trinity Church is not a museum.\"" },
+    { "field": "description", "source": "art", "note": "\"massive proportions, rounded arches, and rough rock-faced, multi-colored stone\"; \"stained glass windows produced by nine different American, British, and European studios\"" },
+    { "field": "significance_text", "source": "nrhp", "note": "\"the prototype of what became immediately known as the 'Richardsonian Romanesque' architectural style\"" },
+    { "field": "significance_text", "source": "art", "note": "\"recognized as one of the ten most important buildings in America by the American Institute of Architects\"; \"In 1971 the building was designated a National Historic Landmark.\"" },
+    { "field": "public_access", "source": "tours", "note": "\"Trinity Church is open for tours Tuesday through Saturday from 10 am to 4:30 pm\"" },
+    { "field": "opening_hours", "source": "tours", "note": "\"open for tours Tuesday through Saturday from 10 am to 4:30 pm\"; \"admission and tours pause from 12:00 pm to 12:45 pm\" on Tuesdays. \"visitor services hours may vary due to weddings, funerals, worship services\"" },
+    { "field": "admission", "source": "tours", "note": "\"The price is $10 for Adults, or $8 for Seniors, Students, Educators, Military, First Responders, and Massachusetts Residents.\"" },
+    { "field": "tours_available", "source": "tours", "note": "\"Admission Tickets include the choice of a Self-Guided, Audio, or Guided Tour.\"" },
+    { "field": "reservation_required", "source": "tours", "note": "Tickets are bought \"upon arrival at the Welcome Desk\"." },
+    { "field": "tags", "source": "art", "note": "\"In 1971 the building was designated a National Historic Landmark.\"; \"La Farge wall murals\"; stained glass by nine studios." }
+  ]
+}

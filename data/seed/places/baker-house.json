@@ -1,0 +1,92 @@
+{
+  "slug": "baker-house",
+  "name": "Baker House",
+  "status": "published",
+  "location": { "latitude": 42.356658, "longitude": -71.096164 },
+  "address_line": "362 Memorial Drive, Cambridge, MA 02139",
+  "city": "cambridge",
+  "country_code": "US",
+  "timezone": "America/New_York",
+  "year_built": { "start": 1949, "is_approximate": false },
+  "building_type": "dormitory",
+  "period": "postwar-modern",
+  "architects": [
+    { "architect": "alvar-aalto", "role": "design architect" },
+    { "architect": "perry-shaw-and-hepburn", "role": "architect of record" }
+  ],
+  "styles": [{ "style": "modernism", "is_primary": true }],
+  "tags": ["brick", "undulating-facade"],
+  "description": "A six-story MIT dormitory on the Charles River, built as an undulating slab clad in rough brick. Over 90 percent of the student rooms look out onto the river. It has a two-story limestone-clad dining pavilion with a bank of circular skylights, and a great stucco-clad stair hangs on the north facade.",
+  "significance_text": "Docomomo US describes it as a pivotal building in Alvar Aalto's career, the most significant of his works in North America, and the first major building to synthesize European Modernism with the regional material vernacular of New England. It was Aalto's second building constructed in the United States, designed during his time teaching at MIT.",
+  "public_access": "exterior_only",
+  "admission": {
+    "type": "unknown",
+    "notes": "A private university residence hall. No public interior tours or visiting hours were found. Guests must be escorted by a resident host. View the building from Memorial Drive and the riverside."
+  },
+  "reservation_required": null,
+  "tours_available": null,
+  "website_url": "https://housing.mit.edu/residences/baker-house",
+  "curated": {
+    "significance_score": 4,
+    "visit_minutes_exterior": 10
+  },
+  "sources": [
+    {
+      "key": "docomomo",
+      "title": "Baker House Dormitory, MIT",
+      "url": "https://www.docomomo-us.org/register/baker-house-dormitory-mit",
+      "publisher": "Docomomo US",
+      "source_type": "preservation_org",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "list",
+      "title": "Baker House, 1949",
+      "url": "https://listart.mit.edu/art-artists/baker-house-1949",
+      "publisher": "MIT List Visual Arts Center",
+      "source_type": "academic",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "house",
+      "title": "About Baker House",
+      "url": "https://baker.mit.edu/about",
+      "publisher": "Baker House, MIT",
+      "source_type": "official_site",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "guests",
+      "title": "Guests in Residence Halls",
+      "url": "https://studentlife.mit.edu/policies-and-resources/guests-in-residence-halls/",
+      "publisher": "MIT Division of Student Life",
+      "source_type": "academic",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "osm",
+      "title": "OpenStreetMap way 29602186: W7 Baker House",
+      "url": "https://www.openstreetmap.org/way/29602186",
+      "publisher": "OpenStreetMap contributors",
+      "source_type": "other",
+      "accessed_at": "2026-09-27"
+    }
+  ],
+  "provenance": [
+    { "field": "location", "source": "osm", "note": "Coordinates from OpenStreetMap Nominatim for \"W7 Baker House, 362, Memorial Drive\"." },
+    { "field": "address", "source": "house", "note": "\"Baker House - 362 Memorial Dr, Cambridge MA 02139\"" },
+    { "field": "architects", "source": "docomomo", "note": "\"Alvar Aalto, design architect Perry Shaw and Hepburn, architects of record\"" },
+    { "field": "architects", "source": "list", "note": "\"Designed by Finnish architect and designer Alvar Aalto during his time teaching at MIT\"" },
+    { "field": "year_built", "source": "docomomo", "note": "\"Commission 1946(e), completion 1949(e).\" The (e) marks an estimate. We record the completion year." },
+    { "field": "year_built", "source": "list", "note": "Page title: \"Baker House, 1949\"" },
+    { "field": "styles", "source": "docomomo", "note": "Classified as \"Modern Movement\"." },
+    { "field": "styles", "source": "house", "note": "\"Internationally recognized as a masterpiece of modernism\"" },
+    { "field": "building_type", "source": "docomomo", "note": "\"Current Use Student housing (dormitory).\"" },
+    { "field": "description", "source": "docomomo", "note": "\"an undulating slab clad in the rough brick of the region's Georgian vernacular\"; \"Over 90 percent of the student rooms look out onto the Charles River.\"; \"On the north facade hangs a great stucco-clad stair\"" },
+    { "field": "significance_text", "source": "docomomo", "note": "\"a pivotal building in architect Alvar Aalto's career and the most significant of his works in North America\"" },
+    { "field": "significance_text", "source": "list", "note": "\"Aalto's second building constructed in the United States\"" },
+    { "field": "public_access", "source": "docomomo", "note": "\"How to Visit: Private university residential building\". Exterior-only is our inference. No source states it in those words." },
+    { "field": "public_access", "source": "guests", "note": "\"Guests not on the resident guest list must be escorted by the resident host when entering/exiting the building.\"" },
+    { "field": "tags", "source": "docomomo", "note": "\"an undulating slab clad in the rough brick\"" }
+  ]
+}

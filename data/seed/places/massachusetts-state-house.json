@@ -1,0 +1,103 @@
+{
+  "slug": "massachusetts-state-house",
+  "name": "Massachusetts State House",
+  "status": "published",
+  "location": { "latitude": 42.358602, "longitude": -71.063875 },
+  "address_line": "24 Beacon Street, Boston, MA 02133",
+  "city": "boston",
+  "country_code": "US",
+  "timezone": "America/New_York",
+  "year_built": { "start": 1795, "end": 1798, "is_approximate": false },
+  "building_type": "state-capitol",
+  "period": "early-republic",
+  "architects": [{ "architect": "charles-bulfinch", "role": "original architect" }],
+  "styles": [{ "style": "federal", "is_primary": true }],
+  "tags": ["national-historic-landmark", "gilded-dome"],
+  "description": "The Massachusetts State House sits atop Beacon Hill at the western edge of Boston Common. It is home to the State Senate, the House of Representatives, and the Governor's Office. Its dome was first gilded in 23 karat gold leaf in 1874.",
+  "significance_text": "Designed by Charles Bulfinch in 1787 and built in 1795-98, it is described in its National Historic Landmark nomination as one of the supreme examples of Federal-period civic architecture in the United States and the masterpiece of Bulfinch's public buildings. It is one of the oldest state capitols in continuous use in the country.",
+  "public_access": "public",
+  "admission": {
+    "type": "free",
+    "notes": "Free docent-led walking tours run on weekdays between 10:00am and 3:30pm and last about 45 minutes. Tours meet in Doric Hall. Self-guided materials are available. Groups are advised to schedule in advance."
+  },
+  "reservation_required": false,
+  "tours_available": true,
+  "website_url": "https://malegislature.gov/StateHouse/Visit",
+  "curated": {
+    "significance_score": 5,
+    "visit_minutes_exterior": 15,
+    "visit_minutes_interior": 60
+  },
+  "sources": [
+    {
+      "key": "nhl",
+      "title": "National Register of Historic Places Inventory - Nomination Form: Massachusetts State House",
+      "url": "https://npgallery.nps.gov/NRHP/GetAsset/NHLS/66000771_text",
+      "publisher": "National Park Service",
+      "source_type": "government",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "nps",
+      "title": "Massachusetts State House",
+      "url": "https://www.nps.gov/places/massachusetts-state-house.htm",
+      "publisher": "National Park Service",
+      "source_type": "government",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "tour",
+      "title": "State House Tours",
+      "url": "https://malegislature.gov/StateHouse/Tour",
+      "publisher": "General Court of the Commonwealth of Massachusetts",
+      "source_type": "government",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "accessibility",
+      "title": "State House Accessibility",
+      "url": "https://malegislature.gov/StateHouse/Accessibility",
+      "publisher": "General Court of the Commonwealth of Massachusetts",
+      "source_type": "government",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "brochure",
+      "title": "Welcome to the Massachusetts State House (brochure, revised 4/28/23)",
+      "url": "https://www.sec.state.ma.us/divisions/state-house-tours/download/welcome-brochure.pdf",
+      "publisher": "Secretary of the Commonwealth of Massachusetts",
+      "source_type": "government",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "osm",
+      "title": "OpenStreetMap way 29718019: Massachusetts State House",
+      "url": "https://www.openstreetmap.org/way/29718019",
+      "publisher": "OpenStreetMap contributors",
+      "source_type": "other",
+      "accessed_at": "2026-09-27"
+    }
+  ],
+  "provenance": [
+    { "field": "location", "source": "osm", "note": "Coordinates from OpenStreetMap Nominatim for \"Massachusetts State House, 24, Beacon Street\"." },
+    { "field": "address", "source": "accessibility", "note": "\"24 Beacon St Room 1 - State House Boston, MA 02133\". OpenStreetMap lists postcode 02108. We use the official mailing ZIP." },
+    { "field": "address", "source": "nps", "note": "\"Address: 24 Beacon Street\"" },
+    { "field": "architects", "source": "nhl", "note": "\"Designed by Charles Bulfinch in 1787 and erected by the noted architect in 1795-98\"" },
+    { "field": "year_built", "source": "nhl", "note": "\"The cornerstone was laid on July 4, 1795, and the new State House was occupied on January 11, 1798.\"" },
+    { "field": "year_built", "source": "nps", "note": "\"completed construction in 1798\"" },
+    { "field": "styles", "source": "nhl", "note": "\"one of the supreme examples of Federal-period civic architecture in the United States\"" },
+    { "field": "building_type", "source": "brochure", "note": "\"one of the oldest State Capitols in continuous use in the country.\"" },
+    { "field": "description", "source": "nps", "note": "\"sits at the western edge of the Boston Common\"; \"home for the State Senate, House of Representatives, and Governor's Office\"" },
+    { "field": "description", "source": "brochure", "note": "\"1874 The State House dome is gilded for the first time in 23 karat gold leaf\"" },
+    { "field": "significance_text", "source": "nhl", "note": "\"the structure is also the masterpiece of Bulfinch's many fine public buildings\"" },
+    { "field": "significance_text", "source": "brochure", "note": "\"one of the oldest State Capitols in continuous use in the country.\"" },
+    { "field": "public_access", "source": "tour", "note": "\"Docents offer free walking tours of the building and collections from 10:00am - 3:30pm. Approximately 45 minutes.\"" },
+    { "field": "admission", "source": "tour", "note": "\"Docents offer free walking tours of the building and collections\"" },
+    { "field": "tours_available", "source": "tour", "note": "\"Docents offer free walking tours\"; \"Meet in Doric Hall\"" },
+    { "field": "tours_available", "source": "brochure", "note": "\"offered by volunteer guides Monday through Friday between 10:00am and 3:30pm\"; \"Self-guided materials are available\"" },
+    { "field": "reservation_required", "source": "tour", "note": "\"Groups are advised to schedule their visit in advance.\" Advance booking is advised, not stated as required." },
+    { "field": "reservation_required", "source": "brochure", "note": "\"Advance reservations are requested for weekday conducted tours.\" Requested, not stated as required." },
+    { "field": "tags", "source": "nps", "note": "\"National Historic Landmark; Freedom Trail Site\"" },
+    { "field": "tags", "source": "brochure", "note": "Gilded dome: \"1997 ... regilded with 23 karat gold leaf\"" }
+  ]
+}

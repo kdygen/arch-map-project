@@ -43,9 +43,12 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
+      - run: uv run ruff check . ../../data/scripts
+      - run: uv run ruff format --check . ../../data/scripts
       - run: uv run alembic upgrade head
+      - run: uv run python ../../data/scripts/seed.py
+      - name: Seed again to prove the import is repeatable
+        run: uv run python ../../data/scripts/seed.py | tee /dev/stderr | grep -q "already up to date"
       - run: uv run pytest
 
   web:

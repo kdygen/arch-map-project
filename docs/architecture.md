@@ -15,11 +15,12 @@ Present today:
 
 - `app/core`: configuration and database access
 - `app/health`: liveness and readiness endpoints
+- `app/catalog`: models, response schemas, place search, filters
+- `app/geo`: all PostGIS expressions. Viewport and radius today, route corridor in Phase 5.
+- `app/seeding`: validation and idempotent import of `data/seed`
 
 Planned, not yet created:
 
-- `app/catalog`: places, architects, styles, tags, filters
-- `app/geo`: PostGIS queries such as viewport and route corridor search
 - `app/routing`: routing provider interface and Google adapter
 - `app/planner`: scoring, strategies, solver. Pure Python with no I/O.
 - `app/ai`: conversational layer, after the MVP
@@ -40,10 +41,28 @@ Planned, not yet created:
   The exact heuristic is refined in the planner phase.
 - An LLM never supplies routes, travel times, opening hours, or building facts.
 
+## Catalog schema notes
+
+Deviations from the originally approved schema, all additive:
+
+- Constrained text columns use CHECK constraints instead of native PostgreSQL
+  enums, so adding a value is an ordinary migration.
+- `cities` and `periods` have a `slug`, which the seed import matches on.
+- `places` has `created_at` and `updated_at`.
+- `opening_hours`, `opening_hours_exceptions`, and `place_images` have a
+  surrogate `id` primary key.
+- `sources.url` is unique. One source can support many places.
+- `place_field_sources` uses the primary key (place, field, source), so one
+  field can cite several sources.
+- `places` has two spatial indexes. The geography index serves distance
+  queries in meters. The geometry expression index serves rectangular viewports.
+- A published place must have a significance score and an exterior visit duration.
+- Provenance is rejected for curated fields by a database constraint.
+
 ## Phases
 
-1. Project foundation (this phase)
-2. Schema and curated seed data
+1. Project foundation (done)
+2. Schema and curated seed data (done)
 3. Map and place details
 4. Filters
 5. Routing and places near a route

@@ -1,0 +1,106 @@
+{
+  "slug": "mit-chapel",
+  "name": "MIT Chapel",
+  "status": "published",
+  "location": { "latitude": 42.358336, "longitude": -71.094153 },
+  "address_line": "48 Massachusetts Avenue, Cambridge, MA 02139",
+  "city": "cambridge",
+  "country_code": "US",
+  "timezone": "America/New_York",
+  "year_built": { "start": 1955, "is_approximate": false },
+  "building_type": "chapel",
+  "period": "postwar-modern",
+  "architects": [{ "architect": "eero-saarinen", "role": "architect" }],
+  "styles": [{ "style": "modernism", "is_primary": true }],
+  "tags": ["brick", "skylight"],
+  "description": "A non-denominational chapel in the form of a brick cylinder rising 33 feet, encircled by a shallow moat and topped with an aluminum bell tower. Undulating interior walls of clinker brick surround a space lit by a domed skylight, the chapel's only window. The altarpiece is by Harry Bertoia, and the spire and bell tower by sculptor Theodore Roszak were added in 1956. It seats up to 140 people.",
+  "significance_text": "Dedicated in May 1955 alongside Saarinen's Kresge Auditorium, the chapel grew out of a postwar institutional interest in reinforcing the humanities at MIT. Both buildings have since been acknowledged as architectural landmarks.",
+  "public_access": "public",
+  "admission": {
+    "type": "unknown",
+    "notes": "Open to the general public during visiting hours, Monday to Friday, 10:00 AM to 11:00 AM and 1:30 PM to 2:30 PM. The chapel is not available for viewing during a service. MIT's page does not mention an admission fee."
+  },
+  "reservation_required": false,
+  "tours_available": null,
+  "website_url": "https://studentlife.mit.edu/wellbeing-support/religious-spiritual-and-ethical-life/mit-chapel/",
+  "curated": {
+    "significance_score": 5,
+    "visit_minutes_exterior": 10,
+    "visit_minutes_interior": 15
+  },
+  "opening_hours": [
+    { "day_of_week": 0, "opens": "10:00", "closes": "11:00" },
+    { "day_of_week": 0, "opens": "13:30", "closes": "14:30" },
+    { "day_of_week": 1, "opens": "10:00", "closes": "11:00" },
+    { "day_of_week": 1, "opens": "13:30", "closes": "14:30" },
+    { "day_of_week": 2, "opens": "10:00", "closes": "11:00" },
+    { "day_of_week": 2, "opens": "13:30", "closes": "14:30" },
+    { "day_of_week": 3, "opens": "10:00", "closes": "11:00" },
+    { "day_of_week": 3, "opens": "13:30", "closes": "14:30" },
+    { "day_of_week": 4, "opens": "10:00", "closes": "11:00" },
+    { "day_of_week": 4, "opens": "13:30", "closes": "14:30" }
+  ],
+  "sources": [
+    {
+      "key": "studentlife",
+      "title": "MIT Chapel",
+      "url": "https://studentlife.mit.edu/wellbeing-support/religious-spiritual-and-ethical-life/mit-chapel/",
+      "publisher": "MIT Division of Student Life",
+      "source_type": "official_site",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "list",
+      "title": "MIT Chapel, 1954",
+      "url": "https://listart.mit.edu/art-artists/mit-chapel-1954",
+      "publisher": "MIT List Visual Arts Center",
+      "source_type": "academic",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "news",
+      "title": "Architectural wonders, chapel, Kresge turn 50",
+      "url": "https://news.mit.edu/2005/chapel-1019",
+      "publisher": "MIT News",
+      "source_type": "academic",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "docomomo",
+      "title": "Kresge Auditorium and Chapel",
+      "url": "https://www.docomomo-us.org/register/kresge-auditorium-and-chapel",
+      "publisher": "Docomomo US",
+      "source_type": "preservation_org",
+      "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "osm",
+      "title": "OpenStreetMap way 24562763: W15 MIT Chapel",
+      "url": "https://www.openstreetmap.org/way/24562763",
+      "publisher": "OpenStreetMap contributors",
+      "source_type": "other",
+      "accessed_at": "2026-09-27"
+    }
+  ],
+  "provenance": [
+    { "field": "location", "source": "osm", "note": "Coordinates from OpenStreetMap Nominatim for \"W15 MIT Chapel, 48, Massachusetts Avenue\"." },
+    { "field": "address", "source": "studentlife", "note": "\"48 Massachusetts Avenue Cambridge, MA 02139\". OpenStreetMap lists postcode 02142. We use MIT's address." },
+    { "field": "architects", "source": "studentlife", "note": "\"Designed by famed architect Eero Saarinen\"" },
+    { "field": "year_built", "source": "studentlife", "note": "\"dedicated in May 1955 alongside Saarinen's Kresge Auditorium\"" },
+    { "field": "year_built", "source": "docomomo", "note": "\"completion 1955(e)\"" },
+    { "field": "year_built", "source": "list", "note": "The List Center titles its page \"MIT Chapel, 1954\" without explaining the date. We use the 1955 dedication and completion date." },
+    { "field": "styles", "source": "docomomo", "note": "Classified as \"Modern Movement\". MIT does not name a style." },
+    { "field": "styles", "source": "news", "note": "Saarinen is called a \"master of mid-century modernism\"." },
+    { "field": "building_type", "source": "studentlife", "note": "\"The MIT Chapel is a non-denominational space\"" },
+    { "field": "description", "source": "news", "note": "\"a brick cylinder stretching 33 feet into the air, topped with an aluminum bell tower and encircled by a shallow moat\"; \"The chapel's spire and bell tower, designed by sculptor Theodore Roszak, were added in 1956.\"" },
+    { "field": "description", "source": "list", "note": "\"clinker bricks, or bricks deformed by excessive heat\"; \"Harry Bertoia's ... Altarpiece for MIT Chapel (1955)\"" },
+    { "field": "description", "source": "studentlife", "note": "\"the Chapel's only window, a beautiful domed skylight\"; seats \"up to 140 people\"" },
+    { "field": "significance_text", "source": "list", "note": "\"grew out of a postwar institutional interest in reinforcing the humanities\"" },
+    { "field": "significance_text", "source": "news", "note": "\"Since then, both the chapel and Kresge Auditorium have been acknowledged as architectural landmarks.\"" },
+    { "field": "public_access", "source": "studentlife", "note": "\"The space is unlocked and open to members of the general public for visiting hours Monday - Friday, 10:00AM to 11:00AM and 1:30PM to 2:30PM.\"" },
+    { "field": "opening_hours", "source": "studentlife", "note": "\"visiting hours Monday - Friday, 10:00AM to 11:00AM and 1:30PM to 2:30PM.\"; \"If you arrive during a service, the Chapel is not available for viewing\"" },
+    { "field": "reservation_required", "source": "studentlife", "note": "\"The space is unlocked and open to members of the general public for visiting hours\". No booking is mentioned." },
+    { "field": "tags", "source": "news", "note": "\"a brick cylinder\"" },
+    { "field": "tags", "source": "studentlife", "note": "\"a beautiful domed skylight\"" }
+  ]
+}
