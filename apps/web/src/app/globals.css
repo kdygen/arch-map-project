@@ -1,0 +1,7 @@
+/* Intentionally minimal. Real styling starts in a later phase. */
+body {
+  margin: 0;
+  padding: 2rem;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}

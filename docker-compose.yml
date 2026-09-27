@@ -1,0 +1,24 @@
+# Local development database only. Production uses Supabase PostgreSQL.
+name: arch-map
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    # The official image is amd64 only. Apple Silicon runs it under emulation,
+    # which is fine for a small development database.
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: archmap
+      POSTGRES_PASSWORD: archmap
+      POSTGRES_DB: archmap
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U archmap -d archmap"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:
