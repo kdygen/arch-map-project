@@ -6,9 +6,9 @@ A discovery platform for architecturally significant places, built around an
 interactive map and a time-budget trip planner. See
 [docs/architecture.md](docs/architecture.md) for the design and roadmap.
 
-**Current state:** Phase 2, catalog database. The API serves a small set of
-real, sourced places with filtering and geographic search. The site still shows
-only a landing page with the live API status. There is no map yet.
+**Current state:** Phase 3, interactive map. The site shows a Google Map with
+our places as markers, loaded from our own API for the visible area. Selecting a
+marker shows a preview and full details with sources.
 
 ## Stack
 
@@ -25,7 +25,8 @@ only a landing page with the live API status. There is no map yet.
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/), running
 - `make`, preinstalled on macOS and Linux
 
-No Google, Supabase, or Anthropic credentials are needed yet.
+A Google Maps browser key is needed to see the map. See
+[Google Maps setup](#google-maps-setup). Tests and CI need no key.
 
 ## First-time setup
 
@@ -50,9 +51,10 @@ make api       # http://localhost:8000  (API docs at /docs)
 make web       # http://localhost:3000
 ```
 
-Open http://localhost:3000. The page should show **API status: Healthy**.
+Open http://localhost:3000. The map opens on Boston and Cambridge with a marker
+for each seeded place.
 
-Then try the catalog:
+You can also query the catalog directly:
 
 ```bash
 curl "http://localhost:8000/api/v1/places"
@@ -64,7 +66,7 @@ curl "http://localhost:8000/api/v1/filters"
 ## Test and lint
 
 ```bash
-make test      # backend tests
+make test      # backend and frontend tests
 make lint      # ruff, eslint, TypeScript
 make check     # everything CI runs, including the frontend build
 ```
@@ -95,6 +97,40 @@ docker compose up -d --wait
 (cd apps/api && uv run pytest && uv run ruff check . && uv run ruff format --check .)
 (cd apps/web && npm run lint && npm run typecheck && npm run build)
 ```
+
+## Google Maps setup
+
+1. In Google Cloud, enable the **Maps JavaScript API**. No other Google API is used yet.
+2. Create an API key and restrict it:
+   - Application restriction: HTTP referrers, for example `http://localhost:3000/*`
+   - API restriction: Maps JavaScript API only
+3. Put the key in `apps/web/.env.local`:
+
+   ```
+   NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY=your-key
+   ```
+
+4. Restart `make web`. Environment changes are only read at startup.
+
+A browser key is visible to every visitor by design. The restrictions are what
+protect it. Never commit `.env.local`.
+
+**Map ID.** The markers use Google's Advanced Markers, which need a Map ID.
+Without configuration the app uses Google's `DEMO_MAP_ID`, which Google provides
+for development. Before production, create a Map ID in Google Cloud under
+Map Management, with type JavaScript and Vector, and set `NEXT_PUBLIC_GOOGLE_MAP_ID`.
+
+If the key is missing or rejected, the page explains what to fix instead of the map.
+
+## How the map loads places
+
+1. The map reports its visible bounds whenever it moves.
+2. The app waits until the map has been still for 350 ms.
+3. It requests `GET /api/v1/places?bbox=west,south,east,north`.
+4. PostGIS returns only the places in that rectangle, and each becomes a marker.
+
+When you zoom in on an area that is already fully loaded, no request is sent.
+A request still running for a previous view is cancelled.
 
 ## API endpoints
 

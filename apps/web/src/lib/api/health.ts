@@ -1,13 +1,11 @@
-import { ApiError, apiGet } from "./client";
+import { z } from "zod";
 
-export type HealthResponse = {
-  status: "healthy";
-};
+import { apiGet } from "./client";
 
-export async function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
-  const body = await apiGet<Partial<HealthResponse>>("/health", signal);
-  if (body.status !== "healthy") {
-    throw new ApiError("API returned an unexpected health payload");
-  }
-  return { status: body.status };
+const healthSchema = z.object({ status: z.literal("healthy") });
+
+export type HealthResponse = z.infer<typeof healthSchema>;
+
+export function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
+  return apiGet("/health", { schema: healthSchema, signal });
 }

@@ -1,11 +1,16 @@
-import { ApiStatus } from "@/components/api-status";
+import { Explorer } from "@/components/explorer";
+import { getMapsConfig } from "@/lib/config";
 
 export default function Home() {
   return (
-    <main>
-      <h1>Architecture Map</h1>
-      <p>Explore architecture through place and route.</p>
-      <ApiStatus />
-    </main>
+    <>
+      <header className="site-header">
+        <h1>Architecture Explorer</h1>
+        <p>Discover significant architecture around you.</p>
+      </header>
+      <main>
+        <Explorer config={getMapsConfig()} />
+      </main>
+    </>
   );
 }

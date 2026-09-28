@@ -1,0 +1,169 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 1.25;
+}
+
+.card h2:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.card h3 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.card h4 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.card p {
+  margin: 0.25rem 0;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.facts {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.facts > div {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 0.5rem;
+}
+
+.facts dt {
+  color: var(--ink-soft);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  height: 120px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--ink-soft);
+}
+
+.placeholder svg {
+  width: 96px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+}
+
+.primary,
+.quiet {
+  align-self: flex-start;
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.primary {
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.quiet {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+}
+
+.primary:focus-visible,
+.quiet:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tags li {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.hours {
+  border-collapse: collapse;
+}
+
+.hours th {
+  padding: 0.15rem 1rem 0.15rem 0;
+  font-weight: 400;
+  text-align: left;
+  vertical-align: top;
+  color: var(--ink-soft);
+}
+
+.hours td {
+  padding: 0.15rem 0;
+}
+
+.sources {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.note {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.problem {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warning);
+  border-radius: 6px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

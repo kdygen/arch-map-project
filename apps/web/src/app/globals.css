@@ -1,7 +1,69 @@
-/* Intentionally minimal. Real styling starts in a later phase. */
+:root {
+  --ink: #1c1b19;
+  --ink-soft: #625f58;
+  --surface: #fff;
+  --surface-muted: #f1efea;
+  --line: #d9d5cc;
+  --accent: #a1401f;
+  --warning: #b3261e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
   margin: 0;
-  padding: 2rem;
-  font-family: system-ui, sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+}
+
+.site-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.site-header p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+@media (max-width: 800px) {
+  html,
+  body {
+    height: auto;
+  }
+
+  .site-header {
+    flex-direction: column;
+    gap: 0;
+  }
 }
