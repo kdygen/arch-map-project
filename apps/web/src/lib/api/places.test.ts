@@ -31,6 +31,22 @@ describe("listPlacesInBounds", () => {
     expect(url.searchParams.get("limit")).toBe("500");
   });
 
+  it("adds filter parameters, repeating lists", async () => {
+    const fetchMock = mockJson(list([]));
+
+    await listPlacesInBounds(bounds, {
+      q: "richardson",
+      style: ["federal", "modernism"],
+      year_from: "1850",
+    });
+
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("q")).toBe("richardson");
+    expect(url.searchParams.getAll("style")).toEqual(["federal", "modernism"]);
+    expect(url.searchParams.get("year_from")).toBe("1850");
+    expect(url.searchParams.get("bbox")).toBe("-71.12,42.34,-71.05,42.37");
+  });
+
   it("returns typed place summaries", async () => {
     mockJson(list([makeSummary()]));
 

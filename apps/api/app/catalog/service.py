@@ -19,6 +19,7 @@ from app.catalog.models import (
     Style,
     Tag,
 )
+from app.catalog.search import search_condition, style_ids_with_descendants
 from app.geo import service as geo
 from app.geo.types import BoundingBox
 
@@ -32,10 +33,12 @@ class PlaceFilters:
 
     Values inside one filter are alternatives, so two architects means
     "by either". Tags are the exception: a place must have every tag.
-    Different filters always combine with AND.
+    Different filters always combine with AND, and so does the text search.
     """
 
     bbox: BoundingBox | None = None
+    # Already normalized. None means no text search.
+    search: str | None = None
     architects: list[str] = field(default_factory=list)
     styles: list[str] = field(default_factory=list)
     building_types: list[str] = field(default_factory=list)
@@ -50,19 +53,15 @@ class PlaceFilters:
     include_unpublished: bool = False
 
 
-def _style_ids_with_descendants(slugs: list[str]) -> Select:
-    """Ids of the given styles plus all their descendant styles."""
-    tree = select(Style.id).where(Style.slug.in_(slugs)).cte("style_tree", recursive=True)
-    tree = tree.union(select(Style.id).where(Style.parent_style_id == tree.c.id))
-    return select(tree.c.id)
-
-
 def _apply_filters(query: Select, filters: PlaceFilters) -> Select:
     if not filters.include_unpublished:
         query = query.where(Place.status == PlaceStatus.PUBLISHED)
 
     if filters.bbox is not None:
         query = query.where(geo.within_bounding_box(Place.location, filters.bbox))
+
+    if filters.search is not None:
+        query = query.where(search_condition(filters.search))
 
     if filters.architects:
         query = query.where(
@@ -77,7 +76,12 @@ def _apply_filters(query: Select, filters: PlaceFilters) -> Select:
         query = query.where(
             Place.id.in_(
                 select(PlaceStyle.place_id).where(
-                    PlaceStyle.style_id.in_(_style_ids_with_descendants(filters.styles))
+                    PlaceStyle.style_id.in_(
+                        style_ids_with_descendants(
+                            select(Style.id).where(Style.slug.in_(filters.styles)),
+                            name="filter_style_tree",
+                        )
+                    )
                 )
             )
         )

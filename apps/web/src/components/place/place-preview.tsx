@@ -22,8 +22,13 @@ export function PlacePreview({ place, onViewDetails, onClose }: Props) {
       <ImagePlaceholder />
       <div className={styles.cardHeader}>
         <h2 id="preview-title">{place.name}</h2>
-        <button type="button" className={styles.quiet} onClick={onClose}>
-          Close<span className={styles.srOnly}> preview of {place.name}</span>
+        <button
+          type="button"
+          className={styles.quiet}
+          aria-label={`Close preview of ${place.name}`}
+          onClick={onClose}
+        >
+          Close
         </button>
       </div>
       <PlaceFacts
@@ -36,8 +41,13 @@ export function PlacePreview({ place, onViewDetails, onClose }: Props) {
           { label: "Admission", value: formatAdmission(place.admission_type) },
         ]}
       />
-      <button type="button" className={styles.primary} onClick={onViewDetails}>
-        View details<span className={styles.srOnly}> for {place.name}</span>
+      <button
+        type="button"
+        className={styles.primary}
+        aria-label={`View details for ${place.name}`}
+        onClick={onViewDetails}
+      >
+        View details
       </button>
     </article>
   );

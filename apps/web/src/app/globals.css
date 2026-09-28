@@ -67,3 +67,7 @@ main {
     gap: 0;
   }
 }
+
+.page-loading {
+  padding: 1.25rem;
+}

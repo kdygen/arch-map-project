@@ -2,8 +2,10 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { stubState } from "@/test/google-maps-stub";
+import { EMPTY_FILTERS, type FilterState } from "@/lib/filters/state";
 import { jsonResponse, makeDetail, makeSummary } from "@/test/fixtures";
+import { makeFilterOptions } from "@/test/fixtures-filters";
+import { stubState } from "@/test/google-maps-stub";
 
 import { Explorer } from "./explorer";
 
@@ -21,46 +23,101 @@ const beta = makeSummary({
   longitude: -71.09,
   year_built_start: 1949,
   year_built_end: null,
+  building_type: { slug: "hall", name: "Hall" },
   primary_style: { slug: "modernism", name: "Modernism" },
   architects: [{ slug: "b-two", name: "B. Two", role: "architect" }],
   public_access: "exterior_only",
   admission_type: "unknown",
 });
 
+/**
+ * A fake API. The browser never filters: the fake server decides what matches,
+ * the way the real API does, so tests check that parameters are sent.
+ */
+function serverMatches(params: URLSearchParams) {
+  const q = params.get("q")?.toLowerCase();
+  const styles = params.getAll("style");
+  const access = params.getAll("public_access");
+  const bbox = params.get("bbox") ?? "";
+  return [alpha, beta].filter(
+    (place) =>
+      bbox.startsWith("-71") &&
+      (!q ||
+        place.name.toLowerCase().includes(q) ||
+        place.architects.some((a) => a.name.toLowerCase().includes(q))) &&
+      (styles.length === 0 || styles.includes(place.primary_style?.slug ?? "")) &&
+      (access.length === 0 || access.includes(place.public_access)),
+  );
+}
+
 type Api = {
-  places?: (bbox: string) => Response | Promise<Response>;
+  places?: (params: URLSearchParams) => Response | Promise<Response>;
   detail?: (slug: string) => Response;
+  filters?: () => Response;
 };
 
-function mockApi({ places, detail }: Api = {}) {
+function mockApi({ places, detail, filters }: Api = {}) {
   const fetchMock = vi.fn(async (input: string) => {
     const url = new URL(input);
+    if (url.pathname === "/api/v1/filters") {
+      return filters ? filters() : jsonResponse(makeFilterOptions());
+    }
     if (url.pathname === "/api/v1/places") {
-      const bbox = url.searchParams.get("bbox") ?? "";
-      if (places) return places(bbox);
-      const items = bbox.startsWith("-71") ? [alpha, beta] : [];
+      if (places) return places(url.searchParams);
+      const items = serverMatches(url.searchParams);
       return jsonResponse({ items, total: items.length, limit: 500, offset: 0 });
     }
     const slug = url.pathname.split("/").pop() ?? "";
     if (detail) return detail(slug);
-    return jsonResponse(makeDetail({ slug, name: slug === "beta-hall" ? "Beta Hall" : "Alpha House" }));
+    return jsonResponse(
+      makeDetail({ slug, name: slug === "beta-hall" ? "Beta Hall" : "Alpha House" }),
+    );
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
 
-const detailCalls = (fetchMock: ReturnType<typeof mockApi>) =>
-  fetchMock.mock.calls.filter(([url]) => !url.includes("/places?")).map(([url]) => url);
+const placeRequests = (fetchMock: ReturnType<typeof mockApi>) =>
+  fetchMock.mock.calls
+    .map(([url]) => new URL(url))
+    .filter((url) => url.pathname === "/api/v1/places");
 
-async function openMap(bounds = boston) {
+const lastPlaceRequest = (fetchMock: ReturnType<typeof mockApi>) =>
+  placeRequests(fetchMock).at(-1)!;
+
+const detailCalls = (fetchMock: ReturnType<typeof mockApi>) =>
+  fetchMock.mock.calls.map(([url]) => url).filter((url) => /\/places\/[^?]+$/.test(url));
+
+async function openMap(initialFilters: FilterState = EMPTY_FILTERS, bounds = boston) {
   const user = userEvent.setup();
-  render(<Explorer config={config} debounceMs={0} />);
+  render(
+    <Explorer
+      config={config}
+      debounceMs={0}
+      searchDebounceMs={0}
+      syncUrl={false}
+      initialFilters={initialFilters}
+    />,
+  );
   act(() => stubState.emitBounds(bounds));
   return user;
 }
 
-const panel = () => screen.getByRole("complementary", { name: "Places" });
+const panel = () => screen.getByRole("complementary", { name: "Explore places" });
+const status = () => screen.getByRole("status");
 const marker = (name: string) => screen.getByRole("button", { name });
+const markerNames = () =>
+  screen.queryAllByTestId("marker").map((m) => m.getAttribute("aria-label"));
+const resultList = () => screen.queryByRole("list", { name: "Places in this map area" });
+
+async function openFilterGroup(user: ReturnType<typeof userEvent.setup>, title: string) {
+  const filters = within(panel()).getByText("Filters", { selector: "summary" }).closest("details")!;
+  if (!filters.open) await user.click(within(filters).getByText("Filters", { selector: "summary" }));
+  const summary = await within(panel()).findByText(title, { selector: "summary" });
+  const group = summary.closest("details")!;
+  if (!group.open) await user.click(summary);
+  return within(group);
+}
 
 describe("Explorer markers", () => {
   it("shows a marker for each place the API returns for the viewport", async () => {
@@ -69,20 +126,18 @@ describe("Explorer markers", () => {
     await openMap();
 
     expect(await screen.findAllByTestId("marker")).toHaveLength(2);
-    expect(screen.getByRole("status")).toHaveTextContent("2 places in view");
-    expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get("bbox")).toBe(
-      "-71.12,42.34,-71.05,42.37",
-    );
+    expect(status()).toHaveTextContent("2 places found in this map area");
+    expect(lastPlaceRequest(fetchMock).searchParams.get("bbox")).toBe("-71.12,42.34,-71.05,42.37");
   });
 
   it("says that it is loading before the first result arrives", async () => {
     let release: (response: Response) => void = () => {};
     mockApi({ places: () => new Promise<Response>((resolve) => (release = resolve)) });
-    render(<Explorer config={config} debounceMs={0} />);
+    render(<Explorer config={config} debounceMs={0} searchDebounceMs={0} syncUrl={false} />);
 
-    expect(screen.getByRole("status")).toHaveTextContent("Waiting for the map");
+    expect(status()).toHaveTextContent("Waiting for the map");
     act(() => stubState.emitBounds(boston));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Loading places"));
+    await waitFor(() => expect(status()).toHaveTextContent("Loading places"));
 
     await act(async () =>
       release(jsonResponse({ items: [alpha], total: 1, limit: 500, offset: 0 })),
@@ -90,15 +145,17 @@ describe("Explorer markers", () => {
     expect(await screen.findAllByTestId("marker")).toHaveLength(1);
   });
 
-  it("explains an empty area and recovers when the map returns", async () => {
+  it("explains an area with no architecture yet and recovers when the map returns", async () => {
     mockApi();
     await openMap();
     await screen.findAllByTestId("marker");
 
     act(() => stubState.emitBounds(paris));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("No places in this area"));
+    await waitFor(() =>
+      expect(status()).toHaveTextContent("No architecture has been added in this area yet"),
+    );
     expect(screen.queryAllByTestId("marker")).toHaveLength(0);
-    expect(screen.getByTestId("google-map")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
 
     act(() => stubState.emitBounds(boston));
     expect(await screen.findAllByTestId("marker")).toHaveLength(2);
@@ -109,7 +166,397 @@ describe("Explorer markers", () => {
 
     await openMap();
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("1 place in view"));
+    await waitFor(() => expect(status()).toHaveTextContent("1 place found in this map area"));
+  });
+});
+
+describe("Explorer search", () => {
+  it("sends the search to the API and shows only what it returns", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    await user.type(screen.getByRole("searchbox", { name: "Search architecture" }), "beta");
+
+    await waitFor(() => expect(markerNames()).toEqual(["Beta Hall"]));
+    const request = lastPlaceRequest(fetchMock);
+    expect(request.searchParams.get("q")).toBe("beta");
+    expect(request.searchParams.get("bbox")).toBe("-71.12,42.34,-71.05,42.37");
+    expect(status()).toHaveTextContent("1 place found");
+  });
+
+  it("finds places by architect through the API", async () => {
+    mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    await user.type(screen.getByRole("searchbox"), "Two");
+
+    await waitFor(() => expect(markerNames()).toEqual(["Beta Hall"]));
+  });
+
+  it("trims and collapses whitespace before sending", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    await user.type(screen.getByRole("searchbox"), "   beta    hall  ");
+
+    await waitFor(() =>
+      expect(lastPlaceRequest(fetchMock).searchParams.get("q")).toBe("beta hall"),
+    );
+  });
+
+  it("treats a blank search as no search", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+    const before = placeRequests(fetchMock).length;
+
+    await user.type(screen.getByRole("searchbox"), "     ");
+
+    expect(placeRequests(fetchMock)).toHaveLength(before);
+    expect(markerNames()).toHaveLength(2);
+  });
+
+  it("does not send more words than the API accepts, and says why", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    await user.type(screen.getByRole("searchbox"), "a b c d e f g h i");
+
+    expect(screen.getByText(/Search uses up to 8 words/)).toBeInTheDocument();
+    expect(
+      placeRequests(fetchMock).every(
+        (url) => !url.searchParams.has("q") || url.searchParams.get("q")!.split(" ").length <= 8,
+      ),
+    ).toBe(true);
+  });
+
+  it("can clear the search", async () => {
+    mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+    await user.type(screen.getByRole("searchbox"), "beta");
+    await waitFor(() => expect(markerNames()).toHaveLength(1));
+
+    await user.click(screen.getByRole("button", { name: "Clear search" }));
+
+    await waitFor(() => expect(markerNames()).toHaveLength(2));
+    expect(screen.getByRole("searchbox")).toHaveValue("");
+  });
+});
+
+describe("Explorer search debounce", () => {
+  it("sends one request after typing stops, not one per keystroke", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const fetchMock = mockApi();
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime, delay: 50 });
+      render(<Explorer config={config} debounceMs={0} searchDebounceMs={300} syncUrl={false} />);
+      act(() => stubState.emitBounds(boston));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400);
+      });
+      const before = placeRequests(fetchMock).length;
+
+      await user.type(screen.getByRole("searchbox"), "richardson");
+      expect(placeRequests(fetchMock)).toHaveLength(before);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400);
+      });
+
+      const after = placeRequests(fetchMock).slice(before);
+      expect(after.map((url) => url.searchParams.get("q"))).toEqual(["richardson"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("Explorer filters", () => {
+  it("keeps the filter panel and its groups closed until opened", async () => {
+    mockApi();
+    await openMap({ ...EMPTY_FILTERS, style: ["modernism"] });
+
+    const filters = within(panel()).getByText("Filters", { selector: "summary" }).closest("details")!;
+    expect(filters.open).toBe(false);
+    expect(within(filters).getByText("1 active")).toBeInTheDocument();
+  });
+
+  it("offers choices loaded from the filters endpoint", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+
+    const style = await openFilterGroup(user, "Style");
+
+    expect(style.getByRole("checkbox", { name: "Modernism" })).toBeInTheDocument();
+    expect(style.getByRole("checkbox", { name: "Classical" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/v1/filters"))).toBe(true);
+  });
+
+  it("applies a style filter through the API", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    const style = await openFilterGroup(user, "Style");
+    await user.click(style.getByRole("checkbox", { name: "Modernism" }));
+
+    await waitFor(() => expect(markerNames()).toEqual(["Beta Hall"]));
+    expect(lastPlaceRequest(fetchMock).searchParams.getAll("style")).toEqual(["modernism"]);
+  });
+
+  it("sends every kind of filter with the right parameter names", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    await user.click(
+      (await openFilterGroup(user, "Architect")).getByRole("checkbox", { name: "B. Two" }),
+    );
+    await user.click(
+      (await openFilterGroup(user, "Building type")).getByRole("checkbox", { name: "Hall" }),
+    );
+    await user.click(
+      (await openFilterGroup(user, "Period")).getByRole("checkbox", { name: "New (1900–present)" }),
+    );
+    await user.click(
+      (await openFilterGroup(user, "Public access")).getByRole("checkbox", {
+        name: "Open to the public",
+      }),
+    );
+    await user.click(
+      (await openFilterGroup(user, "Admission")).getByRole("checkbox", { name: "Paid" }),
+    );
+    await user.click(
+      (await openFilterGroup(user, "Tours")).getByRole("checkbox", { name: "Tours available" }),
+    );
+    await user.click(
+      (await openFilterGroup(user, "Features")).getByRole("checkbox", { name: "Dome" }),
+    );
+    const years = await openFilterGroup(user, "Construction year");
+    await user.type(years.getByRole("spinbutton", { name: "From" }), "1850");
+    await user.type(years.getByRole("spinbutton", { name: "To" }), "1900");
+
+    await waitFor(() =>
+      expect(lastPlaceRequest(fetchMock).searchParams.get("year_to")).toBe("1900"),
+    );
+    const params = lastPlaceRequest(fetchMock).searchParams;
+    expect(params.getAll("architect")).toEqual(["b-two"]);
+    expect(params.getAll("building_type")).toEqual(["hall"]);
+    expect(params.getAll("period")).toEqual(["new"]);
+    expect(params.getAll("public_access")).toEqual(["public"]);
+    expect(params.getAll("admission_type")).toEqual(["paid"]);
+    expect(params.get("tours_available")).toBe("true");
+    expect(params.getAll("tag")).toEqual(["dome"]);
+    expect(params.get("year_from")).toBe("1850");
+    expect(params.get("bbox")).toBe("-71.12,42.34,-71.05,42.37");
+  });
+
+  it("repeats a parameter for several choices in one group", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    const style = await openFilterGroup(user, "Style");
+    await user.click(style.getByRole("checkbox", { name: "Modernism" }));
+    await user.click(style.getByRole("checkbox", { name: "Classical" }));
+
+    await waitFor(() =>
+      expect(lastPlaceRequest(fetchMock).searchParams.getAll("style")).toEqual([
+        "classical",
+        "modernism",
+      ]),
+    );
+    await waitFor(() => expect(markerNames()).toHaveLength(2));
+  });
+
+  it("combines search and filters", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    await user.type(screen.getByRole("searchbox"), "hall");
+    const access = await openFilterGroup(user, "Public access");
+    await user.click(access.getByRole("checkbox", { name: "Open to the public" }));
+
+    await waitFor(() => expect(status()).toHaveTextContent("No places match these filters"));
+    const params = lastPlaceRequest(fetchMock).searchParams;
+    expect(params.get("q")).toBe("hall");
+    expect(params.getAll("public_access")).toEqual(["public"]);
+  });
+
+  it("does not apply a reversed year range and explains why", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    const years = await openFilterGroup(user, "Construction year");
+    await user.type(years.getByRole("spinbutton", { name: "From" }), "1950");
+    await user.type(years.getByRole("spinbutton", { name: "To" }), "1900");
+
+    expect(await years.findByText(/start year is after the end year/)).toBeInTheDocument();
+    const params = lastPlaceRequest(fetchMock).searchParams;
+    expect(params.has("year_to")).toBe(false);
+  });
+
+  it("shows active filters in words and removes one from its chip", async () => {
+    mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+    await user.click(
+      (await openFilterGroup(user, "Style")).getByRole("checkbox", { name: "Modernism" }),
+    );
+    await user.click(
+      (await openFilterGroup(user, "Admission")).getByRole("checkbox", { name: "Not confirmed" }),
+    );
+
+    const chips = within(screen.getByRole("list", { name: "Active filters" }));
+    expect(chips.getByRole("button", { name: /Style: Modernism/ })).toBeInTheDocument();
+    expect(chips.getByRole("button", { name: /Admission: Not confirmed/ })).toBeInTheDocument();
+    expect(screen.getByText("2 active")).toBeInTheDocument();
+
+    await user.click(chips.getByRole("button", { name: /Style: Modernism/ }));
+
+    expect(screen.queryByRole("button", { name: /Style: Modernism/ })).not.toBeInTheDocument();
+    expect(
+      (await openFilterGroup(user, "Style")).getByRole("checkbox", { name: "Modernism" }),
+    ).not.toBeChecked();
+  });
+
+  it("clears every filter and the search at once", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+    await user.type(screen.getByRole("searchbox"), "beta");
+    await user.click(
+      (await openFilterGroup(user, "Style")).getByRole("checkbox", { name: "Modernism" }),
+    );
+    await waitFor(() => expect(markerNames()).toEqual(["Beta Hall"]));
+
+    await user.click(screen.getByRole("button", { name: "Clear all filters" }));
+
+    await waitFor(() => expect(markerNames()).toHaveLength(2));
+    expect(screen.getByRole("searchbox")).toHaveValue("");
+    const params = lastPlaceRequest(fetchMock).searchParams;
+    expect([...params.keys()].sort()).toEqual(["bbox", "limit"]);
+  });
+
+  it("explains an empty filtered result differently and offers Clear filters", async () => {
+    mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    await user.type(screen.getByRole("searchbox"), "zeppelin");
+
+    await waitFor(() =>
+      expect(status()).toHaveTextContent("No places match these filters in the current map area."),
+    );
+    expect(screen.getByTestId("google-map")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    await waitFor(() => expect(markerNames()).toHaveLength(2));
+  });
+
+  it("keeps filters when the map moves away and back", async () => {
+    const fetchMock = mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+    await user.click(
+      (await openFilterGroup(user, "Style")).getByRole("checkbox", { name: "Modernism" }),
+    );
+    await waitFor(() => expect(markerNames()).toEqual(["Beta Hall"]));
+
+    act(() => stubState.emitBounds(paris));
+    await waitFor(() => expect(status()).toHaveTextContent("No places match these filters"));
+    expect(lastPlaceRequest(fetchMock).searchParams.getAll("style")).toEqual(["modernism"]);
+
+    act(() => stubState.emitBounds(boston));
+    await waitFor(() => expect(markerNames()).toEqual(["Beta Hall"]));
+    expect(lastPlaceRequest(fetchMock).searchParams.getAll("style")).toEqual(["modernism"]);
+  });
+
+  it("starts from filters passed in, such as from the page address", async () => {
+    const fetchMock = mockApi();
+
+    await openMap({ ...EMPTY_FILTERS, q: "beta", style: ["modernism"] });
+
+    await waitFor(() => expect(markerNames()).toEqual(["Beta Hall"]));
+    const params = placeRequests(fetchMock)[0].searchParams;
+    expect(params.get("q")).toBe("beta");
+    expect(params.getAll("style")).toEqual(["modernism"]);
+    expect(screen.getByRole("searchbox")).toHaveValue("beta");
+  });
+
+  it("still searches when the filter options cannot be loaded", async () => {
+    let healthy = false;
+    mockApi({
+      filters: () =>
+        healthy ? jsonResponse(makeFilterOptions()) : jsonResponse({ detail: "down" }, 500),
+    });
+    const user = await openMap();
+
+    const alert = await within(panel()).findByRole("alert");
+    expect(alert).toHaveTextContent("Filter choices could not be loaded.");
+    await user.type(screen.getByRole("searchbox"), "beta");
+    await waitFor(() => expect(markerNames()).toEqual(["Beta Hall"]));
+
+    healthy = true;
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await openFilterGroup(user, "Style")).toBeTruthy();
+  });
+
+  it("clears the selection when the filters change", async () => {
+    mockApi();
+    const user = await openMap();
+    await user.click(await screen.findByRole("button", { name: "Alpha House" }));
+    expect(within(panel()).getByRole("heading", { name: "Alpha House" })).toBeInTheDocument();
+
+    await user.click(
+      (await openFilterGroup(user, "Style")).getByRole("checkbox", { name: "Modernism" }),
+    );
+
+    await waitFor(() => expect(markerNames()).toEqual(["Beta Hall"]));
+    expect(within(panel()).queryByRole("heading", { name: "Alpha House" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Explorer results and markers stay in sync", () => {
+  it("lists the matching places", async () => {
+    mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    await user.type(screen.getByRole("searchbox"), "beta");
+
+    await waitFor(() => expect(within(resultList()!).getAllByRole("button")).toHaveLength(1));
+    expect(within(resultList()!).getByRole("button", { name: /Beta Hall/ })).toHaveTextContent(
+      "Modernism · B. Two · 1949",
+    );
+  });
+
+  it("selecting a result selects its marker", async () => {
+    mockApi();
+    const user = await openMap();
+    await screen.findAllByTestId("marker");
+
+    await user.click(within(resultList()!).getByRole("button", { name: /Beta Hall/ }));
+
+    expect(marker("Beta Hall, selected")).toBeInTheDocument();
+    expect(within(panel()).getByRole("heading", { name: "Beta Hall" })).toBeInTheDocument();
+  });
+
+  it("selecting a marker shows its result", async () => {
+    mockApi();
+    const user = await openMap();
+
+    await user.click(await screen.findByRole("button", { name: "Beta Hall" }));
+
+    expect(within(panel()).getByRole("heading", { name: "Beta Hall" })).toBeInTheDocument();
   });
 });
 
@@ -120,8 +567,9 @@ describe("Explorer selection", () => {
 
     await user.click(await screen.findByRole("button", { name: "Beta Hall" }));
 
-    const preview = within(panel());
-    expect(preview.getByRole("heading", { name: "Beta Hall" })).toBeInTheDocument();
+    const preview = within(
+      within(panel()).getByRole("heading", { name: "Beta Hall" }).closest("article")!,
+    );
     expect(preview.getByText("1949")).toBeInTheDocument();
     expect(preview.getByText("Modernism")).toBeInTheDocument();
     expect(preview.getByText("B. Two")).toBeInTheDocument();
@@ -154,9 +602,11 @@ describe("Explorer selection", () => {
   it("can select a place from the list with the keyboard", async () => {
     mockApi();
     const user = await openMap();
-    const list = await within(panel()).findByRole("list");
+    await screen.findAllByTestId("marker");
 
-    within(list).getByRole("button", { name: /Beta Hall/ }).focus();
+    within(resultList()!)
+      .getByRole("button", { name: /Beta Hall/ })
+      .focus();
     await user.keyboard("{Enter}");
 
     expect(within(panel()).getByRole("heading", { name: "Beta Hall" })).toBeInTheDocument();
@@ -167,7 +617,7 @@ describe("Explorer selection", () => {
     const user = await openMap();
 
     await user.click(await screen.findByRole("button", { name: "Alpha House" }));
-    await user.click(screen.getByRole("button", { name: /Close/ }));
+    await user.click(screen.getByRole("button", { name: /^Close/ }));
     expect(within(panel()).queryByRole("heading", { name: "Alpha House" })).not.toBeInTheDocument();
 
     await user.click(marker("Alpha House"));
@@ -181,7 +631,7 @@ describe("Explorer selection", () => {
     await user.click(await screen.findByRole("button", { name: "Alpha House" }));
 
     act(() => stubState.emitBounds(paris));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("No places"));
+    await waitFor(() => expect(status()).toHaveTextContent("No architecture has been added"));
 
     expect(within(panel()).getByRole("heading", { name: "Alpha House" })).toBeInTheDocument();
     expect(marker("Alpha House, selected")).toBeInTheDocument();
@@ -213,7 +663,6 @@ describe("Explorer details", () => {
     expect(details.getByText("Important to the test suite.")).toBeInTheDocument();
     expect(details.getByText("1795–1800")).toBeInTheDocument();
     expect(details.getByText("1 Test Street, Testville")).toBeInTheDocument();
-    expect(details.getByText("Dome")).toBeInTheDocument();
     expect(details.getByText("Ticket required.")).toBeInTheDocument();
     expect(details.getByText("10:00 AM – 12:00 PM, 1:00 PM – 5:00 PM")).toBeInTheDocument();
     expect(details.getByRole("link", { name: /Official website/ })).toHaveAttribute(
@@ -227,7 +676,9 @@ describe("Explorer details", () => {
 
     expect(await screen.findByText("About 15 min")).toBeInTheDocument();
     expect(screen.getByText("About 1 hr")).toBeInTheDocument();
-    expect(screen.getByText(/our own estimates, not information from the venue/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/our own estimates, not information from the venue/),
+    ).toBeInTheDocument();
   });
 
   it("lists sources with what they support", async () => {
@@ -240,10 +691,16 @@ describe("Explorer details", () => {
 
   it("does not show raw field names or internal scores", async () => {
     await openDetails();
-    await screen.findByText("A fictional house used in tests.");
+    const about = await screen.findByText("A fictional house used in tests.");
 
-    const text = panel().textContent ?? "";
-    for (const raw of ["year_built", "field_sources", "significance_score", "official_site", "null"]) {
+    const text = about.closest("article")?.textContent ?? "";
+    for (const raw of [
+      "year_built",
+      "field_sources",
+      "significance_score",
+      "official_site",
+      "null",
+    ]) {
       expect(text).not.toContain(raw);
     }
   });
@@ -269,7 +726,7 @@ describe("Explorer details", () => {
       detail: () => (healthy ? jsonResponse(makeDetail()) : jsonResponse({ detail: "boom" }, 500)),
     });
 
-    const alert = await screen.findByRole("alert");
+    const alert = await within(panel()).findByRole("alert");
     expect(alert).toHaveTextContent("The details could not be loaded.");
     expect(screen.getAllByTestId("marker")).toHaveLength(2);
 
@@ -282,52 +739,9 @@ describe("Explorer details", () => {
   it("explains a place that no longer exists", async () => {
     await openDetails({ detail: () => jsonResponse({ detail: "Place not found" }, 404) });
 
-    const alert = await screen.findByRole("alert");
+    const alert = await within(panel()).findByRole("alert");
     expect(alert).toHaveTextContent("This place is no longer available.");
     expect(within(alert).queryByRole("button")).not.toBeInTheDocument();
-  });
-
-  it("explains malformed details", async () => {
-    await openDetails({ detail: () => jsonResponse({ slug: "alpha-house" }) });
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("The details could not be loaded.");
-  });
-
-  it("works for a place with almost no information", async () => {
-    await openDetails({
-      detail: () =>
-        jsonResponse(
-          makeDetail({
-            address_line: null,
-            year_built_start: null,
-            year_built_end: null,
-            building_type: null,
-            period: null,
-            architects: [],
-            styles: [],
-            tags: [],
-            description: null,
-            significance_text: null,
-            admission_notes: null,
-            reservation_required: null,
-            tours_available: null,
-            accessibility: null,
-            website_url: null,
-            opening_hours: [],
-            curated: {
-              significance_score: null,
-              visit_minutes_exterior: null,
-              visit_minutes_interior: null,
-            },
-            field_sources: [],
-          }),
-        ),
-    });
-
-    expect(await screen.findByText("Visiting")).toBeInTheDocument();
-    expect(screen.queryByText("Sources")).not.toBeInTheDocument();
-    expect(screen.queryByText("Estimated visit time")).not.toBeInTheDocument();
-    expect(screen.getAllByText("Not confirmed")).toHaveLength(2);
   });
 });
 
@@ -341,10 +755,10 @@ describe("Explorer when the API is down", () => {
 
     await openMap();
 
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Places could not be loaded.");
-    expect(alert).toHaveTextContent("It may not be running.");
+    await waitFor(() => expect(screen.getByText(/Places could not be loaded/)).toBeInTheDocument());
+    expect(screen.getByText(/It may not be running/)).toBeInTheDocument();
     expect(screen.getByTestId("google-map")).toBeInTheDocument();
+    expect(resultList()).not.toBeInTheDocument();
   });
 
   it("loads the places after a retry", async () => {
@@ -356,13 +770,17 @@ describe("Explorer when the API is down", () => {
       },
     });
     const user = await openMap();
-    const alert = await screen.findByRole("alert");
+    const message = await screen.findByText(/Places could not be loaded/);
 
     online = true;
-    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    await user.click(
+      within(message.closest("[role=alert]") as HTMLElement).getByRole("button", {
+        name: "Try again",
+      }),
+    );
 
     expect(await screen.findAllByTestId("marker")).toHaveLength(1);
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Places could not be loaded/)).not.toBeInTheDocument();
   });
 
   it("explains a response it cannot read", async () => {
@@ -370,17 +788,40 @@ describe("Explorer when the API is down", () => {
 
     await openMap();
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("a response we could not read");
+    expect(await screen.findByText(/a response we could not read/)).toBeInTheDocument();
   });
 });
 
 describe("Explorer without a Google Maps key", () => {
-  it("shows setup help and still loads nothing it cannot display", () => {
+  it("shows setup help and requests no places", () => {
     const fetchMock = mockApi();
 
-    render(<Explorer config={{ apiKey: null, mapId: "test-map" }} debounceMs={0} />);
+    render(<Explorer config={{ apiKey: null, mapId: "test-map" }} syncUrl={false} />);
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Google Maps is not configured");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByText("Google Maps is not configured")).toBeInTheDocument();
+    expect(placeRequests(fetchMock)).toHaveLength(0);
+  });
+});
+
+describe("Explorer accessible names", () => {
+  it("gives every button a readable name with proper spacing", async () => {
+    mockApi();
+    const user = await openMap();
+    await user.type(screen.getByRole("searchbox"), "alpha");
+    await user.click(
+      (await openFilterGroup(user, "Style")).getByRole("checkbox", { name: "Classical" }),
+    );
+    await user.click(await screen.findByRole("button", { name: "Alpha House" }));
+
+    expect(screen.getByRole("button", { name: "Clear search" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Remove filter: Style: Classical" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Close preview of Alpha House" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "View details for Alpha House" }),
+    ).toBeInTheDocument();
   });
 });

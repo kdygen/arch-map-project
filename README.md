@@ -6,9 +6,10 @@ A discovery platform for architecturally significant places, built around an
 interactive map and a time-budget trip planner. See
 [docs/architecture.md](docs/architecture.md) for the design and roadmap.
 
-**Current state:** Phase 3, interactive map. The site shows a Google Map with
-our places as markers, loaded from our own API for the visible area. Selecting a
-marker shows a preview and full details with sources.
+**Current state:** Phase 4, search and filters. The site shows a Google Map with
+our places as markers, loaded from our own API for the visible area. Places can
+be searched and filtered, and the markers follow. Selecting a place shows a
+preview and full details with sources.
 
 ## Stack
 
@@ -60,6 +61,7 @@ You can also query the catalog directly:
 curl "http://localhost:8000/api/v1/places"
 curl "http://localhost:8000/api/v1/places/mit-chapel"
 curl "http://localhost:8000/api/v1/places?style=modernism&bbox=-71.12,42.34,-71.05,42.37"
+curl "http://localhost:8000/api/v1/places?q=richardson"
 curl "http://localhost:8000/api/v1/filters"
 ```
 
@@ -126,11 +128,21 @@ If the key is missing or rejected, the page explains what to fix instead of the 
 
 1. The map reports its visible bounds whenever it moves.
 2. The app waits until the map has been still for 350 ms.
-3. It requests `GET /api/v1/places?bbox=west,south,east,north`.
-4. PostGIS returns only the places in that rectangle, and each becomes a marker.
+3. Typed search text and year fields are applied after a 300 ms pause.
+   Checkbox filters apply at once.
+4. It requests `GET /api/v1/places` with the bounding box, the search, and the
+   filters together, for example
+   `?bbox=-71.12,42.34,-71.05,42.37&q=richardson&style=modernism`.
+5. PostgreSQL and PostGIS return only matching places in that rectangle, and
+   each becomes a marker and a row in the result list.
 
-When you zoom in on an area that is already fully loaded, no request is sent.
-A request still running for a previous view is cancelled.
+When you zoom in on an area already fully loaded with the same filters, no
+request is sent. A request still running for a previous view or filter is
+cancelled. The browser never decides which places match.
+
+The applied search and filters are kept in the page address, for example
+`/?q=richardson&public_access=public`, so a filtered view survives a refresh
+and can be shared. The map position is not kept in the address.
 
 ## API endpoints
 
@@ -138,7 +150,7 @@ A request still running for a previous view is cancelled.
 |---|---|
 | `GET /api/v1/health` | Liveness. Returns `{"status": "healthy"}` |
 | `GET /api/v1/health/ready` | Readiness. Checks the database, returns 503 if unreachable |
-| `GET /api/v1/places` | Published places as lightweight items for markers and lists |
+| `GET /api/v1/places` | Published places as lightweight items for markers and lists, with search and filters |
 | `GET /api/v1/places/{slug}` | Full details of one place, including provenance |
 | `GET /api/v1/filters` | Available filter options with counts |
 
@@ -149,6 +161,7 @@ Interactive documentation is at http://localhost:8000/docs.
 | Parameter | Meaning |
 |---|---|
 | `bbox` | Viewport as `west,south,east,north` in decimal degrees |
+| `q` | Text search. See below |
 | `architect` | Architect slug. Repeat to match any of them |
 | `style` | Style slug. Includes sub-styles. Repeat to match any of them |
 | `building_type` | Building type slug. Repeat to match any of them |
@@ -162,6 +175,18 @@ Interactive documentation is at http://localhost:8000/docs.
 
 Different parameters combine with AND. Unknown parameters return a 422 error.
 Draft places are never returned.
+
+**Search.** `q` is case-insensitive, and surrounding or repeated whitespace is
+ignored. A blank `q` means no search. Every word must match the start of a word
+in the place name, an architect, a style, a tag, or the building type, so
+`richard` finds Henry Hobson Richardson but `mit` does not find "Dormitory".
+Searching a style also finds its sub-styles. Search is limited to 100 characters
+and 8 words. It uses plain PostgreSQL matching, and full-text or trigram search
+can replace it later in `app/catalog/search.py` without changing the API.
+
+**Year range.** A building matches when any part of its construction span
+overlaps the range. A building built 1872 to 1877 matches `year_from=1875`.
+Buildings with no known construction year never match a year filter.
 
 ## Seed data
 

@@ -46,7 +46,9 @@ Planned, not yet created:
 - `components/map`: the only code that imports Google Maps. It takes plain
   places and reports plain bounds.
 - `components/place`: preview and details. No map or Google code.
-- `components/explorer.tsx`: connects map, data, and selection.
+- `components/explorer.tsx`: connects search, filters, map, data, and selection.
+- `components/filters`: search box, filter panel, active filter chips.
+- `lib/filters`: the single filter state, its reducer, and address sync.
 - `hooks`: viewport loading with debounce, and detail loading.
 - `lib/api`: the typed API client. Every response is validated with zod.
 - `lib/geo`: bounds math with no Google types.
@@ -75,7 +77,7 @@ Deviations from the originally approved schema, all additive:
 1. Project foundation (done)
 2. Schema and curated seed data (done)
 3. Map and place details (done)
-4. Filters
+4. Search and filters (done)
 5. Routing and places near a route
 6. Time-budget planner
 7. Hardening and deployment

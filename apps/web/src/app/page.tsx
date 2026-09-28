@@ -1,4 +1,6 @@
-import { Explorer } from "@/components/explorer";
+import { Suspense } from "react";
+
+import { ExplorerFromUrl } from "@/components/explorer-from-url";
 import { getMapsConfig } from "@/lib/config";
 
 export default function Home() {
@@ -9,7 +11,10 @@ export default function Home() {
         <p>Discover significant architecture around you.</p>
       </header>
       <main>
-        <Explorer config={getMapsConfig()} />
+        {/* Reading the page address needs a Suspense boundary on a static page. */}
+        <Suspense fallback={<p className="page-loading">Loading the explorer…</p>}>
+          <ExplorerFromUrl config={getMapsConfig()} />
+        </Suspense>
       </main>
     </>
   );

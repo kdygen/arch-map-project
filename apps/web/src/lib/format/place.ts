@@ -161,3 +161,38 @@ export function safeExternalUrl(url: string | null): string | null {
     return null;
   }
 }
+
+const ACCESS_FILTER_LABELS: Record<PublicAccess, string> = {
+  public: "Open to the public",
+  exterior_only: "Exterior only",
+  by_appointment: "By appointment",
+  private: "Not open to visitors",
+  unknown: "Access not confirmed",
+};
+
+const ADMISSION_FILTER_LABELS: Record<AdmissionType, string> = {
+  free: "Free",
+  paid: "Paid",
+  donation: "By donation",
+  unknown: "Not confirmed",
+};
+
+/** Short labels for filter controls. */
+export function accessFilterLabel(value: string): string {
+  return ACCESS_FILTER_LABELS[value as PublicAccess] ?? value.replaceAll("_", " ");
+}
+
+export function admissionFilterLabel(value: string): string {
+  return ADMISSION_FILTER_LABELS[value as AdmissionType] ?? value.replaceAll("_", " ");
+}
+
+const TAG_CATEGORY_LABELS: Record<string, string> = {
+  feature: "Features",
+  interior: "Interiors",
+  material: "Materials",
+  designation: "Designations",
+};
+
+export function tagCategoryLabel(category: string): string {
+  return TAG_CATEGORY_LABELS[category] ?? category.charAt(0).toUpperCase() + category.slice(1);
+}
