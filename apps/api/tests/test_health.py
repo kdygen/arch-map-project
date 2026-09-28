@@ -34,7 +34,7 @@ def test_ready_returns_503_when_database_is_unreachable(client):
     try:
         response = client.get("/api/v1/health/ready")
     finally:
-        app.dependency_overrides.clear()
+        app.dependency_overrides.pop(get_engine, None)
 
     assert response.status_code == 503
     assert response.json() == {"detail": "Database is unavailable"}

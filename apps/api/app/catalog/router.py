@@ -18,16 +18,11 @@ SlugList = Annotated[list[str], Field(default_factory=list, max_length=20)]
 Year = Annotated[int | None, Field(ge=-3000, le=3000)]
 
 
-class PlaceQuery(BaseModel):
-    """Query parameters for the place list. Unknown parameters are rejected."""
+class CatalogFilters(BaseModel):
+    """Search and filter parameters shared by every place listing."""
 
     model_config = ConfigDict(extra="forbid")
 
-    bbox: str | None = Field(
-        default=None,
-        description="Viewport as west,south,east,north in decimal degrees.",
-        examples=["-71.12,42.34,-71.05,42.37"],
-    )
     q: str | None = Field(
         default=None,
         max_length=search.MAX_QUERY_LENGTH * 2,
@@ -49,15 +44,6 @@ class PlaceQuery(BaseModel):
     tours_available: bool | None = None
     year_from: Year = Field(default=None, description="Built in or after this year.")
     year_to: Year = Field(default=None, description="Built in or before this year.")
-    limit: int = Field(default=service.DEFAULT_LIMIT, ge=1, le=service.MAX_LIMIT)
-    offset: int = Field(default=0, ge=0)
-
-    @field_validator("bbox")
-    @classmethod
-    def bbox_is_valid(cls, value: str | None) -> str | None:
-        if value is not None:
-            BoundingBox.parse(value)
-        return value
 
     @field_validator("q")
     @classmethod
@@ -74,9 +60,9 @@ class PlaceQuery(BaseModel):
                 raise ValueError("year_from must not be greater than year_to")
         return self
 
-    def to_filters(self) -> service.PlaceFilters:
+    def to_filters(self, bbox: BoundingBox | None = None) -> service.PlaceFilters:
         return service.PlaceFilters(
-            bbox=BoundingBox.parse(self.bbox) if self.bbox else None,
+            bbox=bbox,
             search=self.q,
             architects=self.architect,
             styles=self.style,
@@ -91,12 +77,34 @@ class PlaceQuery(BaseModel):
         )
 
 
+class PlaceQuery(CatalogFilters):
+    """Query parameters for the place list. Unknown parameters are rejected."""
+
+    bbox: str | None = Field(
+        default=None,
+        description="Viewport as west,south,east,north in decimal degrees.",
+        examples=["-71.12,42.34,-71.05,42.37"],
+    )
+    limit: int = Field(default=service.DEFAULT_LIMIT, ge=1, le=service.MAX_LIMIT)
+    offset: int = Field(default=0, ge=0)
+
+    @field_validator("bbox")
+    @classmethod
+    def bbox_is_valid(cls, value: str | None) -> str | None:
+        if value is not None:
+            BoundingBox.parse(value)
+        return value
+
+
 @router.get("/places")
 def list_places(
     session: SessionDep, query: Annotated[PlaceQuery, Query()]
 ) -> schemas.PlaceListResponse:
     """Published places as lightweight items for markers and lists."""
-    return service.list_places(session, query.to_filters(), limit=query.limit, offset=query.offset)
+    bbox = BoundingBox.parse(query.bbox) if query.bbox else None
+    return service.list_places(
+        session, query.to_filters(bbox), limit=query.limit, offset=query.offset
+    )
 
 
 @router.get("/places/{slug}")

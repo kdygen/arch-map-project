@@ -20,6 +20,7 @@ from app.catalog.models import (
     Tag,
 )
 from app.catalog.search import search_condition, style_ids_with_descendants
+from app.geo import corridor
 from app.geo import service as geo
 from app.geo.types import BoundingBox
 
@@ -330,4 +331,56 @@ def get_filters(session: Session) -> schemas.FiltersResponse:
         public_access=count_values(Place.public_access),
         admission_types=count_values(Place.admission_type),
         year_built=schemas.YearRange(min=year_min, max=year_max),
+    )
+
+
+def list_places_near_route(
+    session: Session,
+    filters: PlaceFilters,
+    route_wkt: str,
+    corridor_meters: float,
+    limit: int = DEFAULT_LIMIT,
+) -> schemas.RoutePlacesResponse:
+    """Published places within `corridor_meters` of the route that match the filters.
+
+    Ordered by progress along the route, then by distance from it, then by
+    name and id, so equal inputs always give the same order.
+    """
+    if not 1 <= limit <= MAX_LIMIT:
+        raise ValueError(f"limit must be between 1 and {MAX_LIMIT}")
+    if filters.bbox is not None:
+        raise ValueError("a route search does not take a bounding box")
+
+    line = corridor.line_geometry(route_wkt)
+    near = corridor.within_corridor(Place.location, line, corridor_meters)
+
+    total = session.scalar(
+        _apply_filters(select(func.count()).select_from(Place), filters).where(near)
+    )
+
+    progress = corridor.progress_along_line(Place.location, line).label("progress")
+    distance = corridor.distance_to_line_meters(Place.location, line).label("distance")
+    rows = session.execute(
+        _apply_filters(select(Place, progress, distance), filters)
+        .where(near)
+        .options(
+            selectinload(Place.building_type),
+            selectinload(Place.architect_links).selectinload(PlaceArchitect.architect),
+            selectinload(Place.style_links).selectinload(PlaceStyle.style),
+        )
+        .order_by(progress, distance, Place.name, Place.id)
+        .limit(limit)
+    ).all()
+
+    return schemas.RoutePlacesResponse(
+        items=[
+            schemas.RoutePlace(
+                place=_to_summary(place),
+                distance_from_route_meters=round(dist),
+                route_progress=round(min(max(prog, 0.0), 1.0), 4),
+            )
+            for place, prog, dist in rows
+        ],
+        total=total or 0,
+        corridor_meters=corridor_meters,
     )

@@ -56,3 +56,24 @@
   font-weight: 600;
   white-space: nowrap;
 }
+
+.endpoint {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 3px solid #fff;
+  border-radius: 6px;
+  background: #10243f;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: 0 1px 5px rgb(0 0 0 / 50%);
+}
+
+.endpoint[data-kind="destination"] {
+  border-radius: 6px 6px 6px 0;
+  background: #fff;
+  border-color: #10243f;
+  color: #10243f;
+}

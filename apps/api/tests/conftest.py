@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.db import check_database, get_engine, get_session
 from app.main import app
+from app.routing.dependencies import get_routing_provider
 from tests.seed_fixture import write_seed
 
 API_ROOT = Path(__file__).resolve().parents[1]
@@ -56,6 +57,21 @@ def skip_or_fail_without_database() -> None:
         if os.environ.get("CI"):
             raise
         pytest.skip("PostgreSQL is not running. Start it with `make db-up`.")
+
+
+class ForbiddenRoutingProvider:
+    """Fails loudly if a test would reach the real routing service."""
+
+    def compute_route(self, request):
+        raise AssertionError("Tests must never call the real routing provider.")
+
+
+@pytest.fixture(autouse=True)
+def no_real_routing_provider() -> Iterator[None]:
+    """Automated tests never spend money on Google, whatever keys are configured."""
+    app.dependency_overrides[get_routing_provider] = ForbiddenRoutingProvider
+    yield
+    app.dependency_overrides.pop(get_routing_provider, None)
 
 
 @pytest.fixture
@@ -110,7 +126,7 @@ def catalog_client(db_session: Session) -> Iterator[TestClient]:
     try:
         yield TestClient(app)
     finally:
-        app.dependency_overrides.clear()
+        app.dependency_overrides.pop(get_session, None)
 
 
 @pytest.fixture
