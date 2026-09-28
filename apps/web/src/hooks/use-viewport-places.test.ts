@@ -39,9 +39,12 @@ async function settle(ms = DEBOUNCE) {
   });
 }
 
-function render(initial: Bounds | null = null) {
-  return renderHook(({ bounds }) => useViewportPlaces(bounds, DEBOUNCE), {
-    initialProps: { bounds: initial },
+const NO_FILTERS = { params: {}, key: "" };
+const MODERNISM = { params: { style: ["modernism"] }, key: "style=modernism" };
+
+function render(initial: Bounds | null = null, filters = NO_FILTERS) {
+  return renderHook(({ bounds, filters }) => useViewportPlaces(bounds, DEBOUNCE, filters), {
+    initialProps: { bounds: initial, filters },
   });
 }
 
@@ -82,7 +85,10 @@ describe("useViewportPlaces", () => {
     fetchMock.mockClear();
 
     for (let step = 1; step <= 10; step++) {
-      rerender({ bounds: { ...boston, west: boston.west - step, east: boston.east - step } });
+      rerender({
+        bounds: { ...boston, west: boston.west - step, east: boston.east - step },
+        filters: NO_FILTERS,
+      });
       await settle(50);
     }
     expect(fetchMock).not.toHaveBeenCalled();
@@ -97,8 +103,8 @@ describe("useViewportPlaces", () => {
     const { rerender } = render(boston);
     await settle(0);
 
-    rerender({ bounds: { ...boston } });
-    rerender({ bounds: { ...boston, west: boston.west + 0.000001 } });
+    rerender({ bounds: { ...boston }, filters: NO_FILTERS });
+    rerender({ bounds: { ...boston, west: boston.west + 0.000001 }, filters: NO_FILTERS });
     await settle();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -109,7 +115,7 @@ describe("useViewportPlaces", () => {
     const { result, rerender } = render(boston);
     await settle(0);
 
-    rerender({ bounds: zoomedIn });
+    rerender({ bounds: zoomedIn, filters: NO_FILTERS });
     await settle();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -123,7 +129,7 @@ describe("useViewportPlaces", () => {
     await settle(0);
     expect(result.current.truncated).toBe(true);
 
-    rerender({ bounds: zoomedIn });
+    rerender({ bounds: zoomedIn, filters: NO_FILTERS });
     await settle();
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -134,13 +140,13 @@ describe("useViewportPlaces", () => {
     const { result, rerender } = render(boston);
     await settle(0);
 
-    rerender({ bounds: paris });
+    rerender({ bounds: paris, filters: NO_FILTERS });
     await settle();
     expect(result.current.status).toBe("ready");
     expect(result.current.places).toEqual([]);
     expect(result.current.error).toBeNull();
 
-    rerender({ bounds: boston });
+    rerender({ bounds: boston, filters: NO_FILTERS });
     await settle();
     expect(result.current.places.map((p) => p.slug)).toEqual(["inside"]);
     expect(fetchMock).toHaveBeenCalledTimes(3);
@@ -158,7 +164,7 @@ describe("useViewportPlaces", () => {
     const { result, rerender } = render(boston);
     await settle(0);
 
-    rerender({ bounds: paris });
+    rerender({ bounds: paris, filters: NO_FILTERS });
     await settle();
     await act(async () => releaseBoston(list([inside])));
 
@@ -195,6 +201,71 @@ describe("useViewportPlaces", () => {
 
     expect(result.current.status).toBe("error");
     expect(result.current.error?.kind).toBe("malformed");
+  });
+
+  it("sends the filters with the bounding box", async () => {
+    const fetchMock = mockApi(() => list([]));
+
+    render(boston, MODERNISM);
+    await settle(0);
+
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.getAll("style")).toEqual(["modernism"]);
+    expect(url.searchParams.get("bbox")).toBe("-71.12,42.34,-71.05,42.37");
+  });
+
+  it("requests again at once when the filters change, even for the same viewport", async () => {
+    const fetchMock = mockApi(() => list([inside]));
+    const { rerender } = render(boston);
+    await settle(0);
+
+    rerender({ bounds: boston, filters: MODERNISM });
+    await settle(0);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(new URL(fetchMock.mock.calls[1][0]).searchParams.getAll("style")).toEqual(["modernism"]);
+  });
+
+  it("does not reuse places loaded under different filters when zooming in", async () => {
+    const fetchMock = mockApi(() => list([inside]));
+    const { rerender } = render(boston, MODERNISM);
+    await settle(0);
+
+    rerender({ bounds: zoomedIn, filters: NO_FILTERS });
+    await settle();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("reuses places when zooming in with the same filters", async () => {
+    const fetchMock = mockApi(() => list([inside]));
+    const { rerender } = render(boston, MODERNISM);
+    await settle(0);
+
+    rerender({ bounds: zoomedIn, filters: { ...MODERNISM } });
+    await settle();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels the request for the previous filters", async () => {
+    const signals: AbortSignal[] = [];
+    const fetchMock = vi.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise<Response>((resolve) => {
+          signals.push(init!.signal!);
+          setTimeout(() => resolve(list([])), 1000);
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { rerender } = render(boston);
+    await settle(0);
+
+    rerender({ bounds: boston, filters: MODERNISM });
+    await settle(0);
+
+    expect(signals[0].aborted).toBe(true);
+    expect(signals[1].aborted).toBe(false);
   });
 
   it("ignores bounds that are not valid numbers", async () => {

@@ -29,3 +29,6 @@ export const INITIAL_VIEW = {
 } as const;
 
 export const VIEWPORT_DEBOUNCE_MS = 350;
+
+/** How long typing must pause before a search or year change is applied. */
+export const SEARCH_DEBOUNCE_MS = 300;

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { ApiFilterParams } from "@/lib/filters/state";
 import { type Bounds, toBboxParam } from "@/lib/geo/bounds";
 
 import { apiGet } from "./client";
@@ -114,10 +115,15 @@ export type FieldSource = PlaceDetail["field_sources"][number];
 /** The most places we ask for in one viewport. Matches the API maximum. */
 export const VIEWPORT_LIMIT = 500;
 
-export function listPlacesInBounds(bounds: Bounds, signal?: AbortSignal): Promise<PlaceList> {
+/** Places inside `bounds` that match the filters. PostGIS does the filtering. */
+export function listPlacesInBounds(
+  bounds: Bounds,
+  filters: ApiFilterParams = {},
+  signal?: AbortSignal,
+): Promise<PlaceList> {
   return apiGet("/places", {
     schema: placeListSchema,
-    params: { bbox: toBboxParam(bounds), limit: VIEWPORT_LIMIT },
+    params: { ...filters, bbox: toBboxParam(bounds), limit: VIEWPORT_LIMIT },
     signal,
   });
 }

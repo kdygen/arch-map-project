@@ -172,8 +172,13 @@ function DetailBody({ place }: { place: PlaceDetail }) {
 
         {website && (
           <p>
-            <a href={website} target="_blank" rel="noopener noreferrer">
-              Official website<span className={styles.srOnly}> (opens in a new tab)</span>
+            <a
+              href={website}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Official website (opens in a new tab)"
+            >
+              Official website
             </a>
           </p>
         )}

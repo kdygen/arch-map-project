@@ -3,12 +3,17 @@ import type { ViewportPlaces } from "@/hooks/use-viewport-places";
 import styles from "./explorer.module.css";
 
 function countLabel(count: number): string {
-  if (count === 1) return "1 place in view";
-  return `${count} places in view`;
+  return count === 1 ? "1 place found in this map area" : `${count} places found in this map area`;
 }
 
+type Props = {
+  viewport: ViewportPlaces;
+  filtered: boolean;
+  onClearFilters: () => void;
+};
+
 /** Says in words what the map is showing, for everyone including screen readers. */
-export function ViewportStatus({ viewport }: { viewport: ViewportPlaces }) {
+export function ViewportStatus({ viewport, filtered, onClearFilters }: Props) {
   const { status, places, truncated, retry, error } = viewport;
 
   if (status === "error") {
@@ -29,19 +34,34 @@ export function ViewportStatus({ viewport }: { viewport: ViewportPlaces }) {
     );
   }
 
+  const emptyWithFilters = status === "ready" && places.length === 0 && filtered;
+
   let message: string;
   if (status === "waiting") message = "Waiting for the map…";
   else if (status === "loading") {
     message = places.length > 0 ? `${countLabel(places.length)}. Updating…` : "Loading places…";
+  } else if (emptyWithFilters) {
+    message = "No places match these filters in the current map area.";
   } else if (places.length === 0) {
-    message = "No places in this area. Move or zoom out the map to find some.";
+    message =
+      "No architecture has been added in this area yet. Move or zoom out the map to find some.";
   } else if (truncated) {
     message = `Showing the first ${places.length} places. Zoom in to see them all.`;
   } else message = countLabel(places.length);
 
   return (
-    <p role="status" className={styles.status}>
-      {message}
-    </p>
+    <div className={styles.statusBlock}>
+      <p role="status" className={styles.status}>
+        {message}
+      </p>
+      {emptyWithFilters && (
+        <div className={styles.emptyActions}>
+          <p>Try removing a filter or moving the map.</p>
+          <button type="button" onClick={onClearFilters}>
+            Clear filters
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

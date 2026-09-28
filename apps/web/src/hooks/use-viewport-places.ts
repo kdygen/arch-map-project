@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ApiError, isAbortError } from "@/lib/api/client";
 import { listPlacesInBounds, type PlaceSummary } from "@/lib/api/places";
+import type { ApiFilterParams } from "@/lib/filters/state";
 import { type Bounds, isValidBounds, normalizeBounds, toBboxParam } from "@/lib/geo/bounds";
 import { type Coverage, isCovered, placesInViewport } from "@/lib/geo/viewport";
 
@@ -11,7 +12,7 @@ export type ViewportStatus = "waiting" | "loading" | "ready" | "error";
 
 export type ViewportPlaces = {
   status: ViewportStatus;
-  /** Places inside the current viewport. Kept during a reload to avoid flicker. */
+  /** Matching places inside the current viewport. Kept during a reload to avoid flicker. */
   places: PlaceSummary[];
   /** True when the viewport holds more places than one request returns. */
   truncated: boolean;
@@ -19,45 +20,64 @@ export type ViewportPlaces = {
   retry: () => void;
 };
 
+export type ViewportFilters = {
+  params: ApiFilterParams;
+  /** Changes exactly when `params` changes. See filterKey(). */
+  key: string;
+};
+
+const NO_FILTERS: ViewportFilters = { params: {}, key: "" };
+
 type Failure = { key: string; attempt: number; error: ApiError };
 
 /**
- * Loads the places inside the visible map area.
+ * Loads the places inside the visible map area that match the filters.
  *
- * - Waits until the map has stopped moving for `debounceMs`.
- * - Skips the request when an earlier complete result already covers the area.
- * - Cancels a request that is still running when the viewport changes again.
+ * - Waits until the map has stopped moving for `debounceMs`. Filter changes
+ *   apply at once, because callers debounce typed input themselves.
+ * - Skips the request when an earlier complete result with the same filters
+ *   already covers the area.
+ * - Cancels a request that is still running when anything changes again.
  */
-export function useViewportPlaces(bounds: Bounds | null, debounceMs: number): ViewportPlaces {
+export function useViewportPlaces(
+  bounds: Bounds | null,
+  debounceMs: number,
+  filters: ViewportFilters = NO_FILTERS,
+): ViewportPlaces {
   const requested = useMemo(
     () => (bounds && isValidBounds(bounds) ? normalizeBounds(bounds) : null),
     [bounds],
   );
-  const requestedKey = requested ? toBboxParam(requested) : null;
-  // Debounce the key, a string, so equal viewports never restart the timer.
-  const key = useDebouncedValue(requestedKey, debounceMs);
+  // Debounce the bbox string, so equal viewports never restart the timer.
+  const bboxKey = useDebouncedValue(requested ? toBboxParam(requested) : null, debounceMs);
+  const key = bboxKey === null ? null : `${bboxKey}|${filters.key}`;
 
   const [coverage, setCoverage] = useState<(Coverage & { key: string }) | null>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
   const [attempt, setAttempt] = useState(0);
 
   const viewport = useMemo<Bounds | null>(() => {
-    if (key === null) return null;
-    const [west, south, east, north] = key.split(",").map(Number);
+    if (bboxKey === null) return null;
+    const [west, south, east, north] = bboxKey.split(",").map(Number);
     return { west, south, east, north };
-  }, [key]);
+  }, [bboxKey]);
 
   const covered =
-    viewport !== null && (coverage?.key === key || isCovered(coverage, viewport));
+    viewport !== null && (coverage?.key === key || isCovered(coverage, viewport, filters.key));
+
+  // Read through a ref-like memo so the effect only restarts when the key does.
+  const params = filters.params;
+  const filterKey = filters.key;
 
   useEffect(() => {
     if (viewport === null || key === null || covered) return;
 
     const controller = new AbortController();
-    listPlacesInBounds(viewport, controller.signal)
+    listPlacesInBounds(viewport, params, controller.signal)
       .then((list) => {
         setCoverage({
           key,
+          filterKey,
           bounds: viewport,
           places: list.items,
           complete: list.total <= list.items.length,
@@ -72,10 +92,13 @@ export function useViewportPlaces(bounds: Bounds | null, debounceMs: number): Vi
       });
 
     return () => controller.abort();
+    // `params` is fully described by `filterKey`, which is part of `key`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewport, key, covered, attempt]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
+  // While new filters load, keep showing the previous places to avoid flicker.
   const places = useMemo(
     () => (coverage && viewport ? placesInViewport(coverage.places, viewport) : []),
     [coverage, viewport],
@@ -92,7 +115,7 @@ export function useViewportPlaces(bounds: Bounds | null, debounceMs: number): Vi
 
   return {
     status,
-    places,
+    places: status === "error" ? [] : places,
     truncated: covered && coverage !== null && !coverage.complete,
     error: status === "error" ? (activeFailure?.error ?? null) : null,
     retry,

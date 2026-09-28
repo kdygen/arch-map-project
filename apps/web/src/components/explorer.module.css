@@ -1,6 +1,6 @@
 .explorer {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 24rem;
+  grid-template-columns: 25rem minmax(0, 1fr);
   flex: 1;
   min-height: 0;
 }
@@ -16,13 +16,46 @@
   gap: 1rem;
   padding: 1.25rem;
   overflow-y: auto;
-  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
   background: var(--surface);
+}
+
+.statusBlock {
+  display: grid;
+  gap: 0.4rem;
 }
 
 .status {
   margin: 0;
   font-weight: 600;
+}
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.emptyActions p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.emptyActions button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.emptyActions button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 .hint {
@@ -91,12 +124,13 @@
 @media (max-width: 800px) {
   .explorer {
     grid-template-columns: 1fr;
-    grid-template-rows: 55vh auto;
+    grid-template-rows: auto 55vh;
   }
 
+  /* On small screens the search and filters sit above the map. */
   .panel {
-    border-top: 1px solid var(--line);
-    border-left: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
     overflow-y: visible;
   }
 }

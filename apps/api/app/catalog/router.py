@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from sqlalchemy.orm import Session
 
-from app.catalog import schemas, service
+from app.catalog import schemas, search, service
 from app.catalog.enums import AdmissionType, PublicAccess
 from app.core.db import get_session
 from app.geo.types import BoundingBox
@@ -27,6 +27,15 @@ class PlaceQuery(BaseModel):
         default=None,
         description="Viewport as west,south,east,north in decimal degrees.",
         examples=["-71.12,42.34,-71.05,42.37"],
+    )
+    q: str | None = Field(
+        default=None,
+        max_length=search.MAX_QUERY_LENGTH * 2,
+        description=(
+            "Text search. Every word must match the name, an architect, a style, "
+            "a tag, or the building type. Case-insensitive. Blank means no search."
+        ),
+        examples=["richardson"],
     )
     architect: SlugList = Field(description="Architect slug. Repeat to match any of them.")
     style: SlugList = Field(
@@ -50,6 +59,14 @@ class PlaceQuery(BaseModel):
             BoundingBox.parse(value)
         return value
 
+    @field_validator("q")
+    @classmethod
+    def normalize_search(cls, value: str | None) -> str | None:
+        normalized = search.normalize_query(value)
+        if normalized is not None:
+            search.split_terms(normalized)
+        return normalized
+
     @model_validator(mode="after")
     def year_range_is_ordered(self) -> Self:
         if self.year_from is not None and self.year_to is not None:
@@ -60,6 +77,7 @@ class PlaceQuery(BaseModel):
     def to_filters(self) -> service.PlaceFilters:
         return service.PlaceFilters(
             bbox=BoundingBox.parse(self.bbox) if self.bbox else None,
+            search=self.q,
             architects=self.architect,
             styles=self.style,
             building_types=self.building_type,
