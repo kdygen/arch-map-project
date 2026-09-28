@@ -12,7 +12,7 @@ const admissionType = z.enum(["free", "paid", "donation", "unknown"]);
 const latitude = z.number().min(-90).max(90);
 const longitude = z.number().min(-180).max(180);
 
-const placeSummarySchema = z.object({
+export const placeSummarySchema = z.object({
   id: z.string(),
   slug: z.string().min(1),
   name: z.string().min(1),

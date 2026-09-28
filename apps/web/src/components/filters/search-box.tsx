@@ -10,19 +10,21 @@ import styles from "./filters.module.css";
 type Props = {
   q: string;
   dispatch: (action: FilterAction) => void;
+  /** Overrides the visible hint and accessible name. */
+  label?: string;
 };
 
-export function SearchBox({ q, dispatch }: Props) {
+export function SearchBox({ q, dispatch, label }: Props) {
   const problem = searchProblem(q);
   return (
     <form role="search" className={styles.search} onSubmit={(event) => event.preventDefault()}>
       <label htmlFor="place-search" className={styles.srOnly}>
-        Search architecture
+        {label ?? "Search architecture"}
       </label>
       <input
         id="place-search"
         type="search"
-        placeholder="Search architecture, architects, styles…"
+        placeholder={label ? "Filter architecture…" : "Search architecture, architects, styles…"}
         value={q}
         maxLength={MAX_SEARCH_LENGTH}
         autoComplete="off"

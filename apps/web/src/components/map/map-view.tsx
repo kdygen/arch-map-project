@@ -1,15 +1,18 @@
 "use client";
 
-import { APIProvider, Map, type MapCameraChangedEvent } from "@vis.gl/react-google-maps";
-import { useCallback, useEffect, useState } from "react";
+import { Map, type MapCameraChangedEvent } from "@vis.gl/react-google-maps";
+import { useCallback } from "react";
 
 import type { PlaceSummary } from "@/lib/api/places";
 import { INITIAL_VIEW, type MapsConfig } from "@/lib/config";
 import type { Bounds } from "@/lib/geo/bounds";
+import type { Route } from "@/lib/routing/types";
 
 import styles from "./map.module.css";
-import { MapNotice, type MapProblem } from "./map-notice";
+import { MapNotice } from "./map-notice";
+import { useMapsProblem } from "./maps-context";
 import { PlaceMarkers } from "./place-markers";
+import { RouteLayer } from "./route-layer";
 
 export type MapViewProps = {
   config: MapsConfig;
@@ -17,29 +20,24 @@ export type MapViewProps = {
   selectedSlug: string | null;
   onSelect: (slug: string | null) => void;
   onBoundsChange: (bounds: Bounds) => void;
+  /** The route to draw, if any. */
+  route?: Route | null;
 };
 
-declare global {
-  interface Window {
-    gm_authFailure?: () => void;
-  }
-}
-
 /**
- * The only component that knows about Google Maps. It receives plain places
- * and reports plain bounds, so the provider can be replaced without touching
- * the rest of the app.
+ * The map itself. Together with the other files in this folder it is the only
+ * code that knows about Google Maps. It receives plain places and reports
+ * plain bounds. It must render inside MapsProvider.
  */
-export function MapView({ config, places, selectedSlug, onSelect, onBoundsChange }: MapViewProps) {
-  const [problem, setProblem] = useState<MapProblem | null>(null);
-
-  useEffect(() => {
-    // Google calls this global when it rejects the key.
-    window.gm_authFailure = () => setProblem("auth-failed");
-    return () => {
-      delete window.gm_authFailure;
-    };
-  }, []);
+export function MapView({
+  config,
+  places,
+  selectedSlug,
+  onSelect,
+  onBoundsChange,
+  route = null,
+}: MapViewProps) {
+  const problem = useMapsProblem();
 
   const handleBounds = useCallback(
     (event: MapCameraChangedEvent) => {
@@ -49,28 +47,25 @@ export function MapView({ config, places, selectedSlug, onSelect, onBoundsChange
     [onBoundsChange],
   );
 
-  if (config.apiKey === null) return <MapNotice problem="missing-key" />;
   if (problem !== null) return <MapNotice problem={problem} />;
 
   return (
-    // APIProvider loads the Maps script once, however often this renders.
-    <APIProvider apiKey={config.apiKey} onError={() => setProblem("load-failed")}>
-      <div className={styles.map} role="region" aria-label="Map of architecture locations">
-        <Map
-          mapId={config.mapId}
-          defaultCenter={INITIAL_VIEW.center}
-          defaultZoom={INITIAL_VIEW.zoom}
-          gestureHandling="greedy"
-          streetViewControl={false}
-          mapTypeControl={false}
-          fullscreenControl={false}
-          clickableIcons={false}
-          onBoundsChanged={handleBounds}
-          onClick={() => onSelect(null)}
-        >
-          <PlaceMarkers places={places} selectedSlug={selectedSlug} onSelect={onSelect} />
-        </Map>
-      </div>
-    </APIProvider>
+    <div className={styles.map} role="region" aria-label="Map of architecture locations">
+      <Map
+        mapId={config.mapId}
+        defaultCenter={INITIAL_VIEW.center}
+        defaultZoom={INITIAL_VIEW.zoom}
+        gestureHandling="greedy"
+        streetViewControl={false}
+        mapTypeControl={false}
+        fullscreenControl={false}
+        clickableIcons={false}
+        onBoundsChanged={handleBounds}
+        onClick={() => onSelect(null)}
+      >
+        {route && <RouteLayer route={route} />}
+        <PlaceMarkers places={places} selectedSlug={selectedSlug} onSelect={onSelect} />
+      </Map>
+    </div>
   );
 }

@@ -1,0 +1,300 @@
+.panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.panel form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.endpoint {
+  position: relative;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.endpoint label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.endpoint input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+}
+
+.endpoint input:disabled {
+  background: var(--surface-muted);
+}
+
+.endpoint input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.endpoint ul {
+  position: absolute;
+  z-index: 10;
+  top: 4.1rem;
+  right: 0;
+  left: 0;
+  max-height: 16rem;
+  margin: 0;
+  padding: 0.25rem;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 15%);
+  list-style: none;
+}
+
+.endpoint li {
+  display: grid;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.endpoint li[aria-selected="true"] {
+  background: var(--surface-muted);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.endpoint li span {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.hint,
+.note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.modes legend {
+  margin-bottom: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.modes label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* The chosen mode shows a filled radio and a thicker border, not only a color. */
+.modes label:has(input:checked) {
+  border: 2px solid var(--ink);
+  font-weight: 600;
+}
+
+.modes input {
+  accent-color: var(--accent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.primary,
+.quiet,
+.swap,
+.problem button {
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.primary {
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.primary:disabled {
+  border-color: var(--line);
+  background: var(--surface-muted);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.quiet,
+.problem button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+}
+
+.swap {
+  justify-self: start;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+}
+
+.swap:disabled {
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.primary:focus-visible,
+.quiet:focus-visible,
+.swap:focus-visible,
+.problem button:focus-visible,
+.list button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.summary {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.summary h2,
+.results h2 {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.endpoints {
+  margin: 0.2rem 0 0;
+}
+
+.figures {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.warnings {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.results {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.count {
+  margin: 0;
+  font-weight: 600;
+}
+
+.list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  counter-reset: stop;
+  list-style: none;
+}
+
+.list button {
+  position: relative;
+  display: grid;
+  gap: 0.1rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem 0.6rem 2.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.list li {
+  counter-increment: stop;
+}
+
+.list button::before {
+  content: counter(stop);
+  position: absolute;
+  top: 0.65rem;
+  left: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.list button[aria-pressed="true"] {
+  border-color: var(--ink);
+  border-width: 2px;
+}
+
+.list span {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.problem {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warning);
+  border-radius: 6px;
+}
+
+.problem p {
+  margin: 0 0 0.4rem;
+}
+
+.fieldProblem {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--warning);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

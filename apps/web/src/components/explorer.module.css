@@ -134,3 +134,35 @@
     overflow-y: visible;
   }
 }
+
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.modes button {
+  padding: 0.45rem 0.75rem;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* The chosen mode differs by border and weight, not only by color. */
+.modes button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.modes button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

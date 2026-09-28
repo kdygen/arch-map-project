@@ -175,3 +175,22 @@ class FiltersResponse(ApiModel):
     public_access: list[ValueOption]
     admission_types: list[ValueOption]
     year_built: YearRange
+
+
+class RoutePlace(ApiModel):
+    """A place near a route, with where it lies relative to the route.
+
+    These are straight-line measurements, not walking detours.
+    """
+
+    place: PlaceSummary
+    # Shortest straight-line distance from the place to the route line.
+    distance_from_route_meters: int
+    # Position of the nearest point on the route, from 0 (origin) to 1 (destination).
+    route_progress: float
+
+
+class RoutePlacesResponse(ApiModel):
+    items: list[RoutePlace]
+    total: int
+    corridor_meters: float

@@ -6,7 +6,9 @@ A discovery platform for architecturally significant places, built around an
 interactive map and a time-budget trip planner. See
 [docs/architecture.md](docs/architecture.md) for the design and roadmap.
 
-**Current state:** Phase 4, search and filters. The site shows a Google Map with
+**Current state:** Phase 5, routes. Choose a start, an end, and walking or
+driving, see the route, and discover architecture near it. Also included from Phase 4:
+search and filters. The site shows a Google Map with
 our places as markers, loaded from our own API for the visible area. Places can
 be searched and filtered, and the markers follow. Selecting a place shows a
 preview and full details with sources.
@@ -26,8 +28,9 @@ preview and full details with sources.
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/), running
 - `make`, preinstalled on macOS and Linux
 
-A Google Maps browser key is needed to see the map. See
-[Google Maps setup](#google-maps-setup). Tests and CI need no key.
+Two Google keys are used: a browser key for the map and location search, and a
+server key for routes. See [Google Maps setup](#google-maps-setup).
+Tests and CI need no keys and never call Google.
 
 ## First-time setup
 
@@ -102,27 +105,48 @@ docker compose up -d --wait
 
 ## Google Maps setup
 
-1. In Google Cloud, enable the **Maps JavaScript API**. No other Google API is used yet.
-2. Create an API key and restrict it:
-   - Application restriction: HTTP referrers, for example `http://localhost:3000/*`
-   - API restriction: Maps JavaScript API only
-3. Put the key in `apps/web/.env.local`:
+The app uses two separate keys. Never commit either one.
 
-   ```
-   NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY=your-key
-   ```
+| Key | Where it lives | Google APIs | Restriction |
+|---|---|---|---|
+| Browser key | `apps/web/.env.local` as `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | Maps JavaScript API, Places API (New) | HTTP referrers, for example `http://localhost:3000/*` |
+| Server key | `apps/api/.env` as `GOOGLE_MAPS_SERVER_KEY` | Routes API | Routes API only. Add an IP restriction in production |
 
-4. Restart `make web`. Environment changes are only read at startup.
+1. In Google Cloud, enable the three APIs in the table.
+2. Create the two keys with the restrictions shown.
+3. Put each key in its file.
+4. Restart `make api` and `make web`. Environment changes are only read at startup.
 
-A browser key is visible to every visitor by design. The restrictions are what
-protect it. Never commit `.env.local`.
+The browser key is visible to every visitor by design, and its restrictions are
+what protect it. The server key never leaves the backend. There must never be a
+`NEXT_PUBLIC_` variable holding the server key.
+
+**Without the server key** everything works except routes. A route request then
+returns a clear error and the rest of the app is unaffected.
 
 **Map ID.** The markers use Google's Advanced Markers, which need a Map ID.
 Without configuration the app uses Google's `DEMO_MAP_ID`, which Google provides
 for development. Before production, create a Map ID in Google Cloud under
 Map Management, with type JavaScript and Vector, and set `NEXT_PUBLIC_GOOGLE_MAP_ID`.
 
-If the key is missing or rejected, the page explains what to fix instead of the map.
+If the browser key is missing or rejected, the page explains what to fix instead of the map.
+
+### What costs money
+
+| Action | Google request |
+|---|---|
+| Opening the page, moving the map | Map loads only |
+| Typing in From or To | Places autocomplete, after a 250 ms pause and at least 2 characters |
+| Choosing a suggestion | One Places lookup for its location, which ends the autocomplete session |
+| **Pressing Find route** | **One Routes API request** |
+| Changing an architecture filter or search | None. Only our own database is asked |
+| Switching between Explore and Route | None. The route is kept |
+| Changing Walking or Driving | None. The shown route is removed until Find route is pressed |
+| Pressing Find route again for the route already shown | None |
+| Swapping From and To | None, until Find route is pressed |
+
+Routes are never requested while typing, on page load, or in the background.
+Google results are not stored in the database.
 
 ## How the map loads places
 
@@ -153,6 +177,8 @@ and can be shared. The map position is not kept in the address.
 | `GET /api/v1/places` | Published places as lightweight items for markers and lists, with search and filters |
 | `GET /api/v1/places/{slug}` | Full details of one place, including provenance |
 | `GET /api/v1/filters` | Available filter options with counts |
+| `POST /api/v1/routes` | A walking or driving route between two coordinates. One paid provider request |
+| `POST /api/v1/routes/nearby-places` | Published places near a route line, in route order. Database only |
 
 Interactive documentation is at http://localhost:8000/docs.
 
@@ -187,6 +213,40 @@ can replace it later in `app/catalog/search.py` without changing the API.
 **Year range.** A building matches when any part of its construction span
 overlaps the range. A building built 1872 to 1877 matches `year_from=1875`.
 Buildings with no known construction year never match a year filter.
+
+## Routes
+
+```bash
+curl -X POST http://localhost:8000/api/v1/routes \
+  -H "Content-Type: application/json" \
+  -d '{"origin": {"lat": 42.3601, "lng": -71.0942},
+       "destination": {"lat": 42.3550, "lng": -71.0655},
+       "travel_mode": "walking"}'
+```
+
+The response holds an encoded polyline, the distance in meters, the duration in
+seconds, and any warnings from the provider. `travel_mode` is `walking`, the
+default, or `driving`. Endpoints more than 50 km apart in a straight line are
+refused for walking, and more than 300 km for driving, before any paid request.
+Driving routes are requested without live traffic.
+
+```bash
+curl -X POST http://localhost:8000/api/v1/routes/nearby-places \
+  -H "Content-Type: application/json" \
+  -d '{"polyline": "<polyline from the route>", "corridor_meters": 500,
+       "filters": {"style": ["modernism"]}}'
+```
+
+- **Corridor.** Places within `corridor_meters` of the route line, 500 by
+  default for every travel mode, allowed from 25 to 1000. This is a straight-line distance measured
+  by PostGIS. It is not a detour time: a place 150 m away can need a longer
+  trip because of the street layout.
+- **Order.** Places are listed by how far along the route their nearest point
+  is, then by distance from the route, then by name.
+- **Filters.** `filters` takes the same search and filters as the place list.
+- **Errors.** Routing errors carry a stable `code`, such as `no_route`,
+  `routing_not_configured`, `routing_quota_exceeded`, `routing_timeout`, or
+  `routing_unavailable`. Provider error details are never passed on.
 
 ## Seed data
 
