@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Architecture Map",
-  description: "Explore architecture through place and route.",
+  title: "Architecture Explorer",
+  description: "Discover significant architecture around you.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

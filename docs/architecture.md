@@ -41,6 +41,17 @@ Planned, not yet created:
   The exact heuristic is refined in the planner phase.
 - An LLM never supplies routes, travel times, opening hours, or building facts.
 
+## Frontend structure
+
+- `components/map`: the only code that imports Google Maps. It takes plain
+  places and reports plain bounds.
+- `components/place`: preview and details. No map or Google code.
+- `components/explorer.tsx`: connects map, data, and selection.
+- `hooks`: viewport loading with debounce, and detail loading.
+- `lib/api`: the typed API client. Every response is validated with zod.
+- `lib/geo`: bounds math with no Google types.
+- Marker clustering, when needed, goes into `components/map/place-markers.tsx`.
+
 ## Catalog schema notes
 
 Deviations from the originally approved schema, all additive:
@@ -63,7 +74,7 @@ Deviations from the originally approved schema, all additive:
 
 1. Project foundation (done)
 2. Schema and curated seed data (done)
-3. Map and place details
+3. Map and place details (done)
 4. Filters
 5. Routing and places near a route
 6. Time-budget planner

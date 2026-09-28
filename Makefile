@@ -9,7 +9,7 @@ help:
 	@echo "make seed-check Validate seed data without touching the database"
 	@echo "make api       Run FastAPI on http://localhost:8000"
 	@echo "make web       Run Next.js on http://localhost:3000"
-	@echo "make test      Run backend tests"
+	@echo "make test      Run backend and frontend tests"
 	@echo "make lint      Lint and typecheck backend and frontend"
 	@echo "make check     Everything CI runs: lint, tests, frontend build"
 
@@ -45,6 +45,7 @@ web:
 
 test:
 	cd apps/api && uv run pytest
+	cd apps/web && npm test
 
 lint:
 	cd apps/api && uv run ruff check . ../../data/scripts && uv run ruff format --check . ../../data/scripts
